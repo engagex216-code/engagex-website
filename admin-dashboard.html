@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin Dashboard – EngageX</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Syne:wght@700;800&display=swap');
+:root{--navy:#0A0A0A;--gold:#D4A017;--gold-light:#F5C842;--white:#FFFFFF;--gray:#8892A4;--card-bg:#141414;--border:rgba(255,255,255,0.07);--green:#22C55E;--red:#EF4444;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--white);min-height:100vh;}
+.login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+.login-box{background:var(--card-bg);border:1px solid var(--border);border-radius:20px;padding:40px;width:100%;max-width:420px;}
+.login-box h2{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:8px;}
+.login-box p{color:var(--gray);font-size:14px;margin-bottom:28px;}
+.form-group{margin-bottom:18px;}
+.form-group label{display:block;font-size:13px;color:var(--gray);margin-bottom:8px;font-weight:500;}
+.form-group input{width:100%;padding:14px 16px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;color:white;font-size:14px;outline:none;transition:border-color .2s;}
+.form-group input:focus{border-color:var(--gold);}
+.btn-login{width:100%;padding:15px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0A0A0A;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;transition:transform .2s;margin-top:10px;}
+.btn-login:hover{transform:translateY(-2px);}
+.error{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#FCA5A5;padding:12px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none;}
+
+/* DASHBOARD STYLES */
+.dashboard{display:none;}
+.header{background:rgba(0,0,0,0.5);border-bottom:1px solid var(--border);padding:24px 6%;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+.header h1{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;}
+.btn-logout{background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#FCA5A5;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-logout:hover{background:rgba(239,68,68,0.3);}
+.content{padding:32px 6%;}
+.tabs{display:flex;gap:12px;margin-bottom:28px;border-bottom:1px solid var(--border);padding-bottom:16px;}
+.tab{padding:10px 20px;border-bottom:2px solid transparent;cursor:pointer;font-weight:600;font-size:14px;color:var(--gray);transition:all .2s;}
+.tab.active{border-bottom-color:var(--gold);color:var(--gold-light);}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+.orders-grid{display:grid;gap:20px;}
+.order-card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:24px;transition:border-color .2s;}
+.order-card:hover{border-color:rgba(212,160,23,0.5);}
+.order-header{display:flex;justify-content:space-between;align-items:start;margin-bottom:16px;flex-wrap:wrap;gap:12px;}
+.order-id{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--gold-light);}
+.order-status{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;}
+.status-pending{background:rgba(245,200,66,0.12);color:var(--gold-light);border:1px solid rgba(245,200,66,0.3);}
+.status-verified{background:rgba(34,197,94,0.12);color:#86EFAC;border:1px solid rgba(34,197,94,0.3);}
+.order-details{margin-bottom:16px;font-size:13px;}
+.detail-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);}
+.detail-row:last-child{border-bottom:none;}
+.detail-label{color:var(--gray);}
+.detail-value{color:white;font-weight:500;}
+.screenshot-preview{width:100%;max-width:200px;border-radius:8px;margin:12px 0;border:1px solid var(--border);}
+.action-buttons{display:flex;gap:12px;flex-wrap:wrap;}
+.btn-action{padding:10px 18px;border-radius:8px;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:transform .2s;}
+.btn-verify{background:rgba(34,197,94,0.2);color:#86EFAC;border:1px solid rgba(34,197,94,0.4);}
+.btn-verify:hover{background:rgba(34,197,94,0.3);transform:translateY(-2px);}
+.btn-reject{background:rgba(239,68,68,0.2);color:#FCA5A5;border:1px solid rgba(239,68,68,0.4);}
+.btn-reject:hover{background:rgba(239,68,68,0.3);transform:translateY(-2px);}
+.empty-state{text-align:center;padding:40px;color:var(--gray);}
+.empty-state-icon{font-size:48px;margin-bottom:12px;}
+@media(max-width:768px){.header{flex-direction:column;align-items:start;}.tabs{overflow-x:auto;}.order-header{flex-direction:column;}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <h2>Admin Panel</h2>
+    <p>EngageX Order Management</p>
+    <div class="error" id="loginError"></div>
+    <form onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Enter admin password" required/>
+      </div>
+      <button type="submit" class="btn-login">🔓 Login</button>
+    </form>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboard">
+  <div class="header">
+    <h1>📊 Admin Dashboard</h1>
+    <button class="btn-logout" onclick="handleLogout()">Logout</button>
+  </div>
+
+  <div class="content">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('pending')">⏳ Pending Orders</div>
+      <div class="tab" onclick="switchTab('verified')">✅ Verified Orders</div>
+      <div class="tab" onclick="switchTab('stats')">📈 Statistics</div>
+    </div>
+
+    <!-- PENDING ORDERS TAB -->
+    <div class="tab-content active" id="pending">
+      <div class="orders-grid" id="pendingOrders">
+        <div class="empty-state">
+          <div class="empty-state-icon">📭</div>
+          <p>No pending orders. Check back soon!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- VERIFIED ORDERS TAB -->
+    <div class="tab-content" id="verified">
+      <div class="orders-grid" id="verifiedOrders">
+        <div class="empty-state">
+          <div class="empty-state-icon">✨</div>
+          <p>No verified orders yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATISTICS TAB -->
+    <div class="tab-content" id="stats">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px;">
+        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center;">
+          <div style="font-size:32px;font-weight:800;color:var(--gold-light);" id="totalOrders">0</div>
+          <div style="font-size:13px;color:var(--gray);margin-top:8px;">Total Orders</div>
+        </div>
+        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center;">
+          <div style="font-size:32px;font-weight:800;color:var(--gold-light);" id="pendingCount">0</div>
+          <div style="font-size:13px;color:var(--gray);margin-top:8px;">Pending Verification</div>
+        </div>
+        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center;">
+          <div style="font-size:32px;font-weight:800;color:var(--gold-light);" id="verifiedCount">0</div>
+          <div style="font-size:13px;color:var(--gray);margin-top:8px;">Verified</div>
+        </div>
+        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center;">
+          <div style="font-size:32px;font-weight:800;color:var(--gold-light);" id="totalRevenue">₹0</div>
+          <div style="font-size:13px;color:var(--gray);margin-top:8px;">Total Revenue</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ADMIN_PASSWORD = 'aman@ybl';
+const SHEET_ID = '1VVnFFUlj5nGOjrnSoGa-RghY5GhrIUTSX8JQN0aV5aA';
+const API_KEY = 'AIzaSyCrioYmiH0BmTanYcQzn_HMXrI4jMgU5ZQ';
+
+function handleLogin(e) {
+  e.preventDefault();
+  const password = document.getElementById('password').value;
+  const errorEl = document.getElementById('loginError');
+  
+  if (password === ADMIN_PASSWORD) {
+    sessionStorage.setItem('adminLoggedIn', 'true');
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    loadOrders();
+  } else {
+    errorEl.textContent = '❌ Incorrect password';
+    errorEl.style.display = 'block';
+  }
+}
+
+function handleLogout() {
+  sessionStorage.removeItem('adminLoggedIn');
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('password').value = '';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  
+  event.target.classList.add('active');
+  document.getElementById(tab).classList.add('active');
+}
+
+async function loadOrders() {
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Orders!A:H?key=${API_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const rows = (data.values || []).slice(1);
+
+    let pending = [], verified = [], stats = {total: 0, pending: 0, verified: 0, revenue: 0};
+
+    rows.forEach(row => {
+      if (!row[0]) return;
+      const order = {
+        id: row[0],
+        email: row[1],
+        service: row[2],
+        quantity: row[3],
+        price: parseInt(row[4]) || 0,
+        date: row[5],
+        status: row[6],
+        transactionId: row[7]
+      };
+
+      stats.total++;
+      stats.revenue += order.price;
+
+      if (order.status === 'Pending') {
+        stats.pending++;
+        pending.push(order);
+      } else {
+        stats.verified++;
+        verified.push(order);
+      }
+    });
+
+    renderOrders('pending', pending);
+    renderOrders('verified', verified);
+    updateStats(stats);
+  } catch (err) {
+    console.error('Error loading orders:', err);
+  }
+}
+
+function renderOrders(type, orders) {
+  const container = document.getElementById(type + 'Orders');
+  
+  if (orders.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${type === 'pending' ? '📭' : '✨'}</div><p>No ${type} orders.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = orders.map(order => `
+    <div class="order-card">
+      <div class="order-header">
+        <div>
+          <div class="order-id">${order.id}</div>
+          <div style="font-size:12px;color:var(--gray);margin-top:4px;">${order.email}</div>
+        </div>
+        <span class="order-status ${type === 'pending' ? 'status-pending' : 'status-verified'}">${order.status}</span>
+      </div>
+      <div class="order-details">
+        <div class="detail-row"><span class="detail-label">Service:</span><span class="detail-value">${order.service}</span></div>
+        <div class="detail-row"><span class="detail-label">Quantity:</span><span class="detail-value">${order.quantity || '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">Amount:</span><span class="detail-value">₹${order.price}</span></div>
+        <div class="detail-row"><span class="detail-label">Transaction ID:</span><span class="detail-value">${order.transactionId}</span></div>
+        <div class="detail-row"><span class="detail-label">Order Date:</span><span class="detail-value">${order.date}</span></div>
+      </div>
+      ${type === 'pending' ? `
+        <div class="action-buttons">
+          <button class="btn-action btn-verify" onclick="verifyOrder('${order.id}', '${order.email}')">✅ Verify</button>
+          <button class="btn-action btn-reject" onclick="rejectOrder('${order.id}')">❌ Reject</button>
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+}
+
+function updateStats(stats) {
+  document.getElementById('totalOrders').textContent = stats.total;
+  document.getElementById('pendingCount').textContent = stats.pending;
+  document.getElementById('verifiedCount').textContent = stats.verified;
+  document.getElementById('totalRevenue').textContent = '₹' + stats.revenue.toLocaleString('en-IN');
+}
+
+function verifyOrder(orderId, email) {
+  if (confirm(`Verify order ${orderId} for ${email}?`)) {
+    // TODO: Update Google Sheet and send email
+    alert('Order verified! Email sent to customer.');
+    loadOrders();
+  }
+}
+
+function rejectOrder(orderId) {
+  if (confirm(`Reject order ${orderId}?`)) {
+    // TODO: Update Google Sheet and send rejection email
+    alert('Order rejected.');
+    loadOrders();
+  }
+}
+
+// Check if already logged in
+if (sessionStorage.getItem('adminLoggedIn')) {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  loadOrders();
+}
+</script>
+</body>
+</html>

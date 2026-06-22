@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Order Google Reviews – EngageX</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Syne:wght@700;800&display=swap');
+:root{--navy:#0A0A0A;--gold:#D4A017;--gold-light:#F5C842;--white:#FFFFFF;--gray:#8892A4;--card-bg:#141414;--border:rgba(255,255,255,0.07);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--white);overflow-x:hidden;min-height:100vh;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px 6%;background:rgba(0,0,0,0.90);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--white);text-decoration:none;}
+.logo span{color:var(--gold-light);}
+.nav-links{display:flex;align-items:center;gap:32px;list-style:none;}
+.nav-links a{color:rgba(255,255,255,0.75);text-decoration:none;font-size:14px;font-weight:500;transition:color .2s;}
+.nav-links a:hover{color:var(--white);}
+.nav-cta{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0A0A0A !important;padding:10px 22px;border-radius:8px;font-weight:700 !important;font-size:13px !important;}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;}
+.hamburger span{width:24px;height:2px;background:white;border-radius:2px;}
+section{padding:80px 6%;}
+.page-hero{padding:130px 6% 70px;position:relative;overflow:hidden;text-align:center;}
+.hero-bg{position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse 70% 60% at 50% 30%,rgba(212,160,23,0.18) 0%,transparent 70%);}
+.hero-content{position:relative;z-index:1;max-width:820px;margin:0 auto;}
+.section-title{font-family:'Syne',sans-serif;font-size:clamp(28px,4vw,48px);font-weight:800;line-height:1.15;margin-bottom:16px;}
+.section-sub{font-size:17px;color:rgba(255,255,255,0.55);line-height:1.7;margin-bottom:48px;}
+.order-form{background:var(--card-bg);border:1px solid var(--border);border-radius:20px;padding:40px;max-width:600px;margin:0 auto;}
+.form-group{margin-bottom:20px;}
+.form-group label{display:block;font-size:13px;color:var(--gray);margin-bottom:8px;font-weight:500;}
+.form-group input,.form-group select{width:100%;padding:14px 16px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;color:white;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s;}
+.form-group input:focus,.form-group select:focus{border-color:var(--gold);}
+.calc-section{background:rgba(212,160,23,0.06);border:1px solid rgba(212,160,23,0.2);border-radius:14px;padding:24px;margin:28px 0;}
+.calc-label{font-size:13px;color:var(--gold-light);font-weight:700;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;}
+.quantity-input{display:flex;align-items:center;gap:12px;}
+.quantity-input input{flex:1;}
+.qty-btn{width:40px;height:40px;background:rgba(212,160,23,0.2);border:1px solid rgba(212,160,23,0.3);color:var(--gold-light);border-radius:8px;cursor:pointer;font-weight:700;transition:all .2s;}
+.qty-btn:hover{background:rgba(212,160,23,0.3);}
+.price-display{background:linear-gradient(135deg,#1A1200,#201800);border:1px solid rgba(212,160,23,0.3);border-radius:14px;padding:20px;text-align:center;margin:20px 0;}
+.price-label{font-size:12px;color:var(--gray);margin-bottom:6px;}
+.price-amount{font-family:'Syne',sans-serif;font-size:42px;font-weight:800;color:var(--gold-light);}
+.btn-continue{width:100%;padding:16px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0A0A0A;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;transition:transform .2s;margin-top:20px;}
+.btn-continue:hover{transform:translateY(-2px);}
+footer{background:#000;border-top:1px solid var(--border);padding:30px 6%;text-align:center;font-size:13px;color:var(--gray);}
+@media(max-width:768px){.nav-links{display:none;}.hamburger{display:flex;}}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">EngageX</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="index.html#services">Services</a></li>
+    <li><a href="dashboard.html" style="background:rgba(212,160,23,0.1);border:1px solid rgba(212,160,23,0.3);color:var(--gold-light);padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px;">🔐 Login</a></li>
+  </ul>
+  <div class="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+</nav>
+
+<div class="page-hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <h1 class="section-title">Order Google <span style="color:var(--gold-light);">Reviews</span></h1>
+    <p class="section-sub">Boost your profile with authentic reviews. Simple ordering, instant pricing.</p>
+  </div>
+</div>
+
+<section>
+  <div class="order-form">
+    <form id="orderForm" onsubmit="handleOrder(event)">
+      
+      <div class="form-group">
+        <label>Your Name *</label>
+        <input type="text" id="clientName" required placeholder="Enter your full name"/>
+      </div>
+
+      <div class="form-group">
+        <label>Email Address *</label>
+        <input type="email" id="clientEmail" required placeholder="your@email.com"/>
+      </div>
+
+      <div class="form-group">
+        <label>Phone / WhatsApp *</label>
+        <input type="tel" id="clientPhone" required placeholder="+91 XXXXX XXXXX"/>
+      </div>
+
+      <div class="form-group">
+        <label>Google Business Profile Link *</label>
+        <input type="text" id="gbpLink" required placeholder="https://maps.google.com/..."/>
+      </div>
+
+      <div class="calc-section">
+        <div class="calc-label">⭐ How many reviews do you want?</div>
+        <div class="quantity-input">
+          <button type="button" class="qty-btn" onclick="changeQty(-5)">−5</button>
+          <input type="number" id="quantity" value="10" min="5" max="1000" onchange="updatePrice()"/>
+          <button type="button" class="qty-btn" onclick="changeQty(5)">+5</button>
+        </div>
+        <p style="font-size:12px;color:var(--gray);margin-top:10px;">Minimum: 5 reviews | Minimum: 1000 reviews</p>
+      </div>
+
+      <div class="price-display">
+        <div class="price-label">Total Price</div>
+        <div class="price-amount">₹<span id="totalPrice">500</span></div>
+        <div style="font-size:12px;color:var(--gray);margin-top:8px;"><span id="quantityDisplay">10</span> reviews × ₹50</div>
+      </div>
+
+      <button type="submit" class="btn-continue">💳 Continue to Payment</button>
+    </form>
+  </div>
+</section>
+
+<footer>
+  <p>© 2025 EngageX. All rights reserved. | <a href="https://wa.me/919058544981" style="color:var(--gold-light);text-decoration:none;">Need help? WhatsApp us</a></p>
+</footer>
+
+<script>
+function changeQty(amount) {
+  const qty = document.getElementById('quantity');
+  const newVal = parseInt(qty.value) + amount;
+  if (newVal >= 5 && newVal <= 1000) {
+    qty.value = newVal;
+    updatePrice();
+  }
+}
+
+function updatePrice() {
+  const qty = parseInt(document.getElementById('quantity').value) || 10;
+  const price = qty * 50;
+  document.getElementById('totalPrice').textContent = price.toLocaleString('en-IN');
+  document.getElementById('quantityDisplay').textContent = qty;
+}
+
+function handleOrder(e) {
+  e.preventDefault();
+  
+  const data = {
+    clientName: document.getElementById('clientName').value,
+    clientEmail: document.getElementById('clientEmail').value,
+    clientPhone: document.getElementById('clientPhone').value,
+    gbpLink: document.getElementById('gbpLink').value,
+    quantity: parseInt(document.getElementById('quantity').value),
+    totalPrice: parseInt(document.getElementById('totalPrice').textContent.replace(/,/g, '')),
+    service: 'Google Reviews'
+  };
+  
+  // Store in session and redirect to payment
+  sessionStorage.setItem('orderData', JSON.stringify(data));
+  window.location.href = 'payment-page.html';
+}
+
+function toggleMenu() {
+  const nav = document.querySelector('.nav-links');
+  nav.style.display = nav.style.display === 'flex' ? 'none' : 'flex';
+  nav.style.flexDirection = 'column';
+  nav.style.position = 'absolute';
+  nav.style.top = '72px';
+  nav.style.left = '0';
+  nav.style.right = '0';
+  nav.style.background = '#0A0A0A';
+  nav.style.padding = '20px 6%';
+  nav.style.borderBottom = '1px solid rgba(255,255,255,0.07)';
+  nav.style.zIndex = '999';
+  nav.style.width = '100%';
+  nav.style.gap = '12px';
+}
+
+// Initialize price display
+updatePrice();
+</script>
+</body>
+</html>

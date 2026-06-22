@@ -177,7 +177,7 @@ function submitOrder() {
     formData.append('notes', document.getElementById('notes').value);
 
     // Submit to Google Apps Script
-    fetch('https://script.google.com/macros/s/YOUR_SCRIPT_ID/usercontent', {
+    fetch('https://script.google.com/macros/s/AKfycbyK9J05LVtjsujYg8lUbhwhf2HzHOgmGf6xDSFGCrRipL3ENPIdQhRzhtK2YcnPdWPm/exec', {
       method: 'POST',
       body: formData
     })

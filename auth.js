@@ -33,11 +33,10 @@ const Auth = (() => {
 
  async function gasGet(params) {
   const qs = new URLSearchParams(params).toString();
-  const res = await fetch(GAS_URL + '?' + qs, {
+  conconst res = await fetch(GAS_URL + '?' + qs, {
     redirect: 'follow',
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' }
-  });
+    method: 'GET'
+});
   const text = await res.text();
   try {
     return JSON.parse(text);

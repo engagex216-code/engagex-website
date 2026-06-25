@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Order Confirmed – EngageX</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Syne:wght@700;800&display=swap');
+:root{--navy:#0A0A0A;--gold:#D4A017;--gold-light:#F5C842;--white:#FFFFFF;--gray:#8892A4;--card-bg:#141414;--border:rgba(255,255,255,0.07);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--white);min-height:100vh;display:flex;flex-direction:column;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px 6%;background:rgba(0,0,0,0.90);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--white);text-decoration:none;}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#D4A017,#F5C842);clip-path:polygon(25% 0%,100% 0%,75% 100%,0% 100%);flex-shrink:0;}
+.logo span{color:var(--gold-light);}
+
+.main{flex:1;display:flex;align-items:center;justify-content:center;padding:100px 6% 60px;}
+.confirm-card{background:var(--card-bg);border:1px solid rgba(34,197,94,0.2);border-radius:24px;padding:52px 44px;text-align:center;max-width:520px;width:100%;position:relative;overflow:hidden;}
+.confirm-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#22c55e,#4ade80,#22c55e);}
+
+@keyframes pop{0%{transform:scale(0.7);opacity:0;}70%{transform:scale(1.08);}100%{transform:scale(1);opacity:1;}}
+.success-icon{width:76px;height:76px;background:rgba(34,197,94,0.1);border:2px solid rgba(34,197,94,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:34px;margin:0 auto 22px;animation:pop .4s ease forwards;}
+
+.service-tag{display:inline-block;background:rgba(212,160,23,0.1);border:1px solid rgba(212,160,23,0.2);color:var(--gold-light);padding:4px 14px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:16px;}
+.confirm-card h1{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;margin-bottom:8px;}
+.confirm-card .subtitle{color:rgba(255,255,255,0.5);font-size:15px;margin-bottom:32px;line-height:1.65;}
+
+.order-id-box{background:rgba(212,160,23,0.07);border:1px solid rgba(212,160,23,0.2);border-radius:13px;padding:22px;margin-bottom:26px;}
+.oid-label{font-size:11px;color:var(--gray);font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;}
+.oid-val{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;color:var(--gold-light);letter-spacing:2px;word-break:break-all;}
+.copy-id-btn{margin-top:10px;background:none;border:1px solid rgba(212,160,23,0.2);color:rgba(255,255,255,0.45);padding:6px 14px;border-radius:7px;font-size:11px;cursor:pointer;font-family:inherit;transition:all .2s;}
+.copy-id-btn:hover{border-color:rgba(212,160,23,0.5);color:var(--gold-light);}
+
+.steps-list{text-align:left;display:flex;flex-direction:column;gap:13px;margin-bottom:30px;}
+.step-row{display:flex;align-items:flex-start;gap:13px;}
+.step-dot{width:26px;height:26px;border-radius:50%;background:rgba(212,160,23,0.1);border:1px solid rgba(212,160,23,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--gold-light);flex-shrink:0;margin-top:1px;}
+.step-text{font-size:13px;color:rgba(255,255,255,0.65);line-height:1.65;}
+.step-text strong{color:white;}
+
+.btn-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;}
+.btn-primary{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0A0A0A;padding:13px 26px;border-radius:9px;font-weight:700;font-size:14px;text-decoration:none;transition:transform .2s;}
+.btn-primary:hover{transform:translateY(-2px);}
+.btn-secondary{display:inline-flex;align-items:center;gap:7px;border:1.5px solid rgba(212,160,23,0.25);color:var(--gold-light);padding:13px 26px;border-radius:9px;font-weight:600;font-size:14px;text-decoration:none;transition:all .2s;}
+.btn-secondary:hover{background:rgba(212,160,23,0.07);}
+
+footer{padding:26px 6%;border-top:1px solid var(--border);text-align:center;color:var(--gray);font-size:13px;}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="logo"><div class="logo-icon"></div>Engage<span>X</span></a>
+  <div id="navAuthArea"></div>
+</nav>
+
+<div class="main">
+  <div class="confirm-card">
+    <div class="success-icon">✅</div>
+    <div class="service-tag" id="serviceTag">EngageX</div>
+    <h1>Order Received!</h1>
+    <p class="subtitle">Your payment is under review. We'll verify it within 1–3 hours and get started right away.</p>
+
+    <div class="order-id-box">
+      <div class="oid-label">Your Order ID</div>
+      <div class="oid-val" id="orderIdDisplay">EX00000000</div>
+      <button class="copy-id-btn" onclick="copyOrderId()">📋 Copy Order ID</button>
+    </div>
+
+    <div class="steps-list">
+      <div class="step-row">
+        <div class="step-dot">1</div>
+        <div class="step-text"><strong>Payment review</strong> — Our team checks your screenshot within 1–3 hours.</div>
+      </div>
+      <div class="step-row">
+        <div class="step-dot">2</div>
+        <div class="step-text"><strong>Confirmation sent</strong> — You'll get a WhatsApp message + email with your Order ID.</div>
+      </div>
+      <div class="step-row">
+        <div class="step-dot">3</div>
+        <div class="step-text"><strong>Work begins</strong> — We process your order and update its status in your dashboard.</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <a href="dashboard.html" class="btn-primary">View Dashboard →</a>
+      <a href="https://wa.me/919058544981" class="btn-secondary" target="_blank">💬 WhatsApp Us</a>
+    </div>
+  </div>
+</div>
+
+<footer><p>© 2025 EngageX · Thank you for your order! 🙏</p></footer>
+
+<script src="auth.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const orderId = sessionStorage.getItem('ex_order_id') || ('EX' + Date.now().toString().slice(-8));
+    const service = sessionStorage.getItem('ex_order_service') || 'EngageX Service';
+    document.getElementById('orderIdDisplay').textContent = orderId;
+    document.getElementById('serviceTag').textContent = service;
+    // Clear so back button doesn't re-show stale data
+    sessionStorage.removeItem('ex_order_id');
+    sessionStorage.removeItem('ex_order_service');
+    sessionStorage.removeItem('ex_order_total');
+  });
+
+  function copyOrderId() {
+    const id = document.getElementById('orderIdDisplay').textContent;
+    navigator.clipboard.writeText(id).then(() => {
+      const btn = document.querySelector('.copy-id-btn');
+      btn.textContent = '✅ Copied!';
+      setTimeout(() => btn.textContent = '📋 Copy Order ID', 2500);
+    });
+  }
+</script>
+</body>
+</html>

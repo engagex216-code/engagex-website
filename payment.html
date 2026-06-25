@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Payment – EngageX</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Syne:wght@700;800&display=swap');
+:root{--navy:#0A0A0A;--gold:#D4A017;--gold-light:#F5C842;--white:#FFFFFF;--gray:#8892A4;--card-bg:#141414;--border:rgba(255,255,255,0.07);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--white);overflow-x:hidden;min-height:100vh;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px 6%;background:rgba(0,0,0,0.90);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--white);text-decoration:none;}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#D4A017,#F5C842);clip-path:polygon(25% 0%,100% 0%,75% 100%,0% 100%);flex-shrink:0;}
+.logo span{color:var(--gold-light);}
+.page-wrap{padding:110px 6% 60px;max-width:860px;margin:0 auto;}
+
+.progress-bar{display:flex;align-items:center;margin-bottom:40px;}
+.prog-step{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;}
+.prog-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;}
+.prog-step.done .prog-num{background:linear-gradient(135deg,#D4A017,#F5C842);color:#0A0A0A;}
+.prog-step.active .prog-num{background:linear-gradient(135deg,#D4A017,#F5C842);color:#0A0A0A;}
+.prog-step.idle .prog-num{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.3);}
+.prog-step.done .prog-label,.prog-step.active .prog-label{color:white;}
+.prog-step.idle .prog-label{color:rgba(255,255,255,0.3);}
+.prog-line{flex:1;height:1px;background:rgba(255,255,255,0.1);margin:0 12px;}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;}
+@media(max-width:640px){.two-col{grid-template-columns:1fr;}}
+
+.qr-card,.upload-card{background:var(--card-bg);border:1px solid var(--border);border-radius:20px;padding:30px;}
+.card-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:5px;}
+.card-sub{color:var(--gray);font-size:13px;margin-bottom:22px;}
+
+.qr-box{background:white;border-radius:14px;padding:16px;display:inline-block;margin-bottom:18px;text-align:center;}
+.qr-box img{width:180px;height:180px;display:block;border-radius:6px;}
+.qr-placeholder{width:180px;height:180px;background:linear-gradient(135deg,#f0f0f0,#e0e0e0);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;color:#666;text-align:center;padding:16px;line-height:1.6;gap:4px;}
+.qr-placeholder .qr-icon{font-size:32px;margin-bottom:6px;}
+
+.upi-row{background:rgba(212,160,23,0.07);border:1px solid rgba(212,160,23,0.2);border-radius:10px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}
+.upi-id-text{font-family:monospace;font-size:14px;color:var(--gold-light);font-weight:600;}
+.copy-btn{background:none;border:1px solid rgba(212,160,23,0.25);color:rgba(255,255,255,0.5);padding:5px 10px;border-radius:7px;font-size:11px;cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap;}
+.copy-btn:hover{border-color:rgba(212,160,23,0.5);color:var(--gold-light);}
+
+.amount-box{background:linear-gradient(135deg,rgba(212,160,23,0.12),rgba(245,200,66,0.07));border:1px solid rgba(212,160,23,0.25);border-radius:10px;padding:14px 18px;}
+.amount-label{font-size:11px;color:var(--gray);margin-bottom:4px;}
+.amount-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--gold-light);}
+
+.fg{margin-bottom:16px;}
+.fg label{display:block;font-size:12px;color:var(--gray);margin-bottom:7px;font-weight:500;}
+.fg input{width:100%;padding:12px 14px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:9px;color:white;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s;}
+.fg input:focus{border-color:var(--gold);}
+
+.order-mini{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:11px;padding:14px;margin-bottom:18px;font-size:13px;}
+.mini-row{display:flex;justify-content:space-between;margin-bottom:6px;color:rgba(255,255,255,0.6);}
+.mini-row:last-child{margin-bottom:0;font-weight:700;color:var(--gold-light);}
+.mini-row span:last-child{text-align:right;color:rgba(255,255,255,0.85);}
+.mini-row:last-child span:last-child{color:var(--gold-light);}
+
+.file-drop{border:2px dashed rgba(212,160,23,0.2);border-radius:11px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
+.file-drop:hover,.file-drop.over{border-color:rgba(212,160,23,0.5);background:rgba(212,160,23,0.03);}
+.file-drop input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.file-drop-icon{font-size:26px;margin-bottom:7px;}
+.file-drop-text{font-size:13px;color:rgba(255,255,255,0.6);}
+.file-drop-hint{font-size:11px;color:var(--gray);margin-top:3px;}
+.file-chosen{display:none;align-items:center;gap:8px;background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.2);border-radius:8px;padding:10px 13px;font-size:13px;color:#86efac;margin-top:8px;}
+.file-chosen.show{display:flex;}
+
+.msg{padding:11px 14px;border-radius:9px;font-size:13px;margin-bottom:14px;display:none;}
+.msg.error{background:rgba(239,68,68,0.09);border:1px solid rgba(239,68,68,0.3);color:#f87171;display:block;}
+.msg.success{background:rgba(34,197,94,0.09);border:1px solid rgba(34,197,94,0.3);color:#4ade80;display:block;}
+
+.btn-submit{display:block;width:100%;padding:15px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0A0A0A;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:transform .2s,opacity .2s;box-shadow:0 6px 24px rgba(212,160,23,0.25);}
+.btn-submit:hover{transform:translateY(-2px);}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.submit-note{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--gray);margin-top:12px;}
+
+footer{padding:36px 6%;border-top:1px solid var(--border);text-align:center;color:var(--gray);font-size:13px;}
+.wa-float{position:fixed;bottom:24px;right:24px;width:52px;height:52px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;text-decoration:none;box-shadow:0 4px 20px rgba(37,211,102,0.4);z-index:999;transition:transform .2s;}
+.wa-float:hover{transform:scale(1.1);}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="logo"><div class="logo-icon"></div>Engage<span>X</span></a>
+  <div id="navAuthArea"></div>
+</nav>
+
+<div class="page-wrap">
+  <div class="progress-bar">
+    <div class="prog-step done"><div class="prog-num">✓</div><span class="prog-label">Order Details</span></div>
+    <div class="prog-line"></div>
+    <div class="prog-step active"><div class="prog-num">2</div><span class="prog-label">Payment</span></div>
+    <div class="prog-line"></div>
+    <div class="prog-step idle"><div class="prog-num">3</div><span class="prog-label">Confirmation</span></div>
+  </div>
+
+  <div class="two-col">
+    <!-- LEFT: QR -->
+    <div class="qr-card">
+      <h3 class="card-title">Scan & Pay via UPI</h3>
+      <p class="card-sub">GPay · PhonePe · Paytm · BHIM · Any UPI app</p>
+
+      <div class="qr-box">
+        <!--
+          REPLACE this div with: <img src="upi-qr.png" alt="UPI QR Code" width="180" height="180"/>
+          Generate your QR at: upilink.in or bhimupi.org.in
+        -->
+        <div class="qr-placeholder">
+          <div class="qr-icon">📲</div>
+          <strong>Add your QR here</strong>
+          Replace with:<br/><code>&lt;img src="upi-qr.png"&gt;</code>
+        </div>
+      </div>
+
+      <div class="upi-row">
+        <span class="upi-id-text" id="upiIdText">9058544981@paytm</span>
+        <button class="copy-btn" id="copyUpiBtn" onclick="copyUPI()">📋 Copy</button>
+      </div>
+
+      <div class="amount-box">
+        <div class="amount-label">Amount to Pay</div>
+        <div class="amount-val" id="payAmount">₹—</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Confirm -->
+    <div class="upload-card">
+      <h3 class="card-title">Confirm Your Payment</h3>
+      <p class="card-sub">Fill these details after paying — your order will be queued instantly.</p>
+
+      <div class="order-mini" id="orderMini">
+        <div class="mini-row"><span>Service</span><span id="miniService">—</span></div>
+        <div class="mini-row"><span>Business</span><span id="miniBiz">—</span></div>
+        <div class="mini-row"><span>Total</span><span id="miniTotal">—</span></div>
+      </div>
+
+      <div class="fg">
+        <label>UPI Transaction ID / UTR Number <span style="color:#f87171">*</span></label>
+        <input type="text" id="txnId" placeholder="e.g. 412345678901 or T2506251234"/>
+      </div>
+
+      <div class="fg">
+        <label>Payment Screenshot <span style="color:#f87171">*</span></label>
+        <div class="file-drop" id="fileDrop">
+          <input type="file" id="screenshot" accept="image/*" onchange="handleFile(this)"/>
+          <div class="file-drop-icon">📸</div>
+          <div class="file-drop-text">Tap to upload screenshot</div>
+          <div class="file-drop-hint">JPG · PNG · WebP — max 5 MB</div>
+        </div>
+        <div class="file-chosen" id="fileChosen"><span>✅</span><span id="fileName">screenshot.jpg</span></div>
+      </div>
+
+      <div class="fg">
+        <label>Your WhatsApp Number <span style="color:#f87171">*</span></label>
+        <input type="tel" id="waNumber" placeholder="+91 XXXXX XXXXX"/>
+      </div>
+
+      <div class="msg" id="formMsg"></div>
+
+      <button class="btn-submit" id="submitBtn" onclick="submitOrder()">Submit Order →</button>
+      <div class="submit-note"><span>⚡</span><span>Verified within 1–3 hours · WhatsApp + email confirmation with your Order ID</span></div>
+    </div>
+  </div>
+</div>
+
+<footer><p>© 2025 EngageX · 🔒 Secure Payment</p></footer>
+<a href="https://wa.me/919058544981" class="wa-float">💬</a>
+
+<script src="auth.js"></script>
+<script>
+  // ─── CONFIG ───────────────────────────────────────────────
+  // Replace with your actual Google Apps Script deployment URL
+  const GAS_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+
+  let orderData = null;
+  let screenshotBase64 = null;
+
+  document.addEventListener('DOMContentLoaded', function() {
+    if (!Auth.isLoggedIn()) { window.location.href = 'index.html'; return; }
+
+    const raw = sessionStorage.getItem('ex_pending_order');
+    if (!raw) { window.location.href = 'index.html'; return; }
+
+    orderData = JSON.parse(raw);
+    document.getElementById('miniService').textContent = orderData.service;
+    document.getElementById('miniBiz').textContent = orderData.bizName || '—';
+    document.getElementById('miniTotal').textContent = orderData.total;
+    document.getElementById('payAmount').textContent = orderData.total;
+
+    const user = Auth.getUser();
+    if (user?.phone) document.getElementById('waNumber').value = user.phone;
+  });
+
+  function copyUPI() {
+    navigator.clipboard.writeText(document.getElementById('upiIdText').textContent).then(() => {
+      const btn = document.getElementById('copyUpiBtn');
+      btn.textContent = '✅ Copied';
+      setTimeout(() => btn.textContent = '📋 Copy', 2500);
+    });
+  }
+
+  function handleFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { showMsg('File too large. Max 5 MB.', 'error'); input.value = ''; return; }
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileChosen').classList.add('show');
+    const reader = new FileReader();
+    reader.onload = e => { screenshotBase64 = e.target.result.split(',')[1]; };
+    reader.readAsDataURL(file);
+  }
+
+  const drop = document.getElementById('fileDrop');
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', e => {
+    e.preventDefault(); drop.classList.remove('over');
+    const file = e.dataTransfer.files[0];
+    if (file) { document.getElementById('screenshot').files = e.dataTransfer.files; handleFile(document.getElementById('screenshot')); }
+  });
+
+  function showMsg(text, type) {
+    const el = document.getElementById('formMsg');
+    el.className = 'msg ' + type;
+    el.textContent = text;
+  }
+
+  async function submitOrder() {
+    const txnId    = document.getElementById('txnId').value.trim();
+    const waNumber = document.getElementById('waNumber').value.trim();
+
+    if (!txnId)          return showMsg('Please enter your Transaction ID / UTR number.', 'error');
+    if (!screenshotBase64) return showMsg('Please upload your payment screenshot.', 'error');
+    if (!waNumber)       return showMsg('Please enter your WhatsApp number.', 'error');
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+
+    const user = Auth.getUser();
+    const orderId = 'EX' + Date.now().toString().slice(-8);
+
+    const fullOrder = {
+      ...orderData,
+      orderId,
+      txnId,
+      waNumber,
+      screenshotBase64,
+      userName:  user.name,
+      userEmail: user.email,
+      userPhone: user.phone,
+      status: 'Pending',
+      submittedAt: new Date().toISOString()
+    };
+
+    // Save to client dashboard
+    Auth.addOrder({
+      orderId,
+      service:     orderData.service,
+      total:       orderData.total,
+      bizName:     orderData.bizName || '',
+      qty:         orderData.qty || null,
+      status:      'Pending',
+      submittedAt: fullOrder.submittedAt
+    });
+
+    // Push to Google Apps Script → Sheets + email
+    try {
+      await fetch(GAS_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'newOrder', ...fullOrder })
+      });
+    } catch (e) { console.warn('GAS sync warning:', e); }
+
+    // Pass order ID and service name to confirmation page
+    sessionStorage.setItem('ex_order_id', orderId);
+    sessionStorage.setItem('ex_order_service', orderData.service);
+    sessionStorage.setItem('ex_order_total', orderData.total);
+    sessionStorage.removeItem('ex_pending_order');
+
+    window.location.href = 'confirmation.html';
+  }
+</script>
+</body>
+</html>

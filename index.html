@@ -618,6 +618,7 @@
     <li><a href="blog.html">Blog</a></li>
     <li><a href="contact.html">Contact</a></li>
     <li><a href="https://wa.me/919058544981" class="nav-cta">WhatsApp Us</a></li>
+    <li><a href="dashboard.html" style="background:rgba(212,160,23,0.1);border:1px solid rgba(212,160,23,0.3);color:var(--gold-light);padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px;">🔐 Client Login</a></li>
   </ul>
   <div class="hamburger" onclick="toggleMenu()">
     <span></span><span></span><span></span>
@@ -1199,9 +1200,14 @@
     nav.style.position = 'absolute';
     nav.style.top = '72px';
     nav.style.left = '0'; nav.style.right = '0';
-    nav.style.background = '#0A0F2E';
+    nav.style.background = '#0A0A0A';
     nav.style.padding = '20px 6%';
     nav.style.borderBottom = '1px solid rgba(255,255,255,0.07)';
+    nav.style.zIndex = '999';
+    nav.style.width = '100%';
+    nav.style.maxHeight = 'calc(100vh - 72px)';
+    nav.style.overflowY = 'auto';
+    nav.style.gap = '12px';
   }
 
   // Scroll animations

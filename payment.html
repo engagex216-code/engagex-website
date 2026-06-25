@@ -163,13 +163,18 @@ footer{padding:36px 6%;border-top:1px solid var(--border);text-align:center;colo
 <script>
   // ─── CONFIG ───────────────────────────────────────────────
   // Replace with your actual Google Apps Script deployment URL
-  const GAS_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxn63KDFPDtUTWwv6kpimVdxugA_4XtyX3tp4qvPUQdWEiWVyuLWBzszCSZVY4dH6a5yw/exec';
 
   let orderData = null;
   let screenshotBase64 = null;
 
   document.addEventListener('DOMContentLoaded', function() {
-    if (!Auth.isLoggedIn()) { window.location.href = 'index.html'; return; }
+    // Wait for auth.js to be ready
+    if (typeof Auth === 'undefined' || !Auth.isLoggedIn()) {
+      sessionStorage.setItem('ex_redirect', window.location.href);
+      window.location.href = 'index.html';
+      return;
+    }
 
     const raw = sessionStorage.getItem('ex_pending_order');
     if (!raw) { window.location.href = 'index.html'; return; }

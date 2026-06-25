@@ -7,7 +7,7 @@
 const Auth = (() => {
 
   const SESSION_KEY = 'engagex_session';
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbwqR8-zOYOUz64igAbADgY58lFs3FHeC-9yFZdk0bFw-5F_Gu1yu0GzBI1zD9D7Yylerg/exec';
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbzyf6vaZMB7mTJgHcnrzINi5b67KQRCUBY3MKSvdxGKU5aaGLukPzox9q1hAOhlNCArfA/exec';
 
   // ── Session helpers (localStorage for current login session) ──
   function getUser()     { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); }

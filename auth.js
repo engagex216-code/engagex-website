@@ -31,12 +31,23 @@ const Auth = (() => {
     return res;
   }
 
-  async function gasGet(params) {
-    const qs = new URLSearchParams(params).toString();
-    const res = await fetch(GAS_URL + '?' + qs);
-    const data = await res.json();
-    return data;
+ async function gasGet(params) {
+  const qs = new URLSearchParams(params).toString();
+  const res = await fetch(GAS_URL + '?' + qs, {
+    redirect: 'follow',
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' }
+  });
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch(e) {
+    // Try extracting JSON from redirect response
+    const match = text.match(/\{.*\}/s);
+    if (match) return JSON.parse(match[0]);
+    return { success: false, message: 'Response parse error' };
   }
+}
 
   // ── Save order to session user ───────────────────────────────
   function addOrder(order) {

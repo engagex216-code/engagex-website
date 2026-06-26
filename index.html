@@ -1651,15 +1651,24 @@
 
     const btn = document.getElementById('exLoginBtn');
     btn.disabled=true; btn.textContent='Signing in…';
-    await new Promise(r=>setTimeout(r,600));
 
-    const found = exUsers.find(u=>u.email.toLowerCase()===email.toLowerCase() && u.password===pwd);
-    btn.disabled=false; btn.textContent='Sign In';
-    if(!found){ exShowErr('Incorrect email or password.'); return; }
+    try {
+      const res = await fetch(EX_SHEET_URL + '?action=login&email=' + encodeURIComponent(email.toLowerCase()) + '&password=' + encodeURIComponent(pwd));
+      const data = await res.json();
+      btn.disabled=false; btn.textContent='Sign In';
 
-    const pending = exPending;
-    exSaveSession(found); exRenderNav(); exCloseAll();
-    if(pending) setTimeout(()=>alert(`✅ Logged in! Redirecting to WhatsApp for "${pending}"…`),300);
+      if(data && data.success){
+        const user = { id: data.id, name: data.name, email: data.email, phone: data.phone, registeredAt: data.registeredAt, orders: [] };
+        const pending = exPending;
+        exSaveSession(user); exRenderNav(); exCloseAll();
+        if(pending) setTimeout(()=>alert(`✅ Logged in! Redirecting to WhatsApp for "${pending}"…`),300);
+      } else {
+        exShowErr((data && data.message) || 'Incorrect email or password.');
+      }
+    } catch(e) {
+      btn.disabled=false; btn.textContent='Sign In';
+      exShowErr('Connection error. Please try again.');
+    }
   }
 
   // ── REGISTER ──
@@ -1693,8 +1702,7 @@
 
     // Sync to Google Sheet (fire & forget)
     try {
-      fetch(EX_SHEET_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ sheet:'Users', name, email, phone, registeredAt: newUser.registeredAt }) });
+      fetch(EX_SHEET_URL + '?action=register&name=' + encodeURIComponent(name) + '&email=' + encodeURIComponent(email) + '&phone=' + encodeURIComponent(phone) + '&password=' + encodeURIComponent(pwd) + '&registeredAt=' + encodeURIComponent(newUser.registeredAt)).catch(function(e){ console.warn('Sheet sync:', e); });
     } catch(e){}
 
     btn.disabled=false; btn.textContent='Create Account';

@@ -200,8 +200,13 @@ function renderOrders(orders) {
     const biz     = o.bizName || o.BizName || '';
     const total   = o.total   || o.Total   || '—';
     const status  = o.status  || o.Status  || 'Pending';
-    const txn     = o.txnId   || o.TxnID   || '';
-    const date    = o.submittedAt || o.SubmittedAt || '';
+    const txn      = o.txnId    || o.TxnID    || '';
+    const date     = o.submittedAt || o.SubmittedAt || '';
+    const progress = parseInt(o.progress || 0);
+    const target   = parseInt(o.target   || 0);
+    const pct      = target > 0 ? Math.min(100, Math.round((progress / target) * 100)) : 0;
+    const note     = o.note || '';
+    const showProgress = target > 0;
     return `<div class="order-card">
       <div class="order-top">
         <div>
@@ -216,6 +221,17 @@ function renderOrders(orders) {
         <div><div class="d-label">Amount</div><div class="d-val">${total}</div></div>
         ${txn ? `<div><div class="d-label">Txn ID</div><div class="d-val" style="font-family:monospace;font-size:12px;">${txn}</div></div>` : ''}
       </div>
+      ${showProgress ? `
+      <div style="margin-top:14px;padding:14px;background:rgba(255,255,255,0.02);border-radius:10px;border:1px solid rgba(212,160,23,0.1);">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;">
+          <span style="color:var(--gray);">Progress</span>
+          <span style="color:var(--gold-light);font-weight:700;">${progress} / ${target} · ${pct}%</span>
+        </div>
+        <div style="background:#111;border-radius:6px;height:10px;overflow:hidden;">
+          <div style="height:10px;background:linear-gradient(90deg,#D4A017,#F5C842);width:${pct}%;border-radius:6px;"></div>
+        </div>
+        ${note ? `<p style="margin-top:10px;font-size:13px;color:rgba(255,255,255,0.6);background:#111;padding:10px 12px;border-radius:8px;border-left:3px solid #F5C842;">📝 ${note}</p>` : ''}
+      </div>` : ''}
     </div>`;
   }).join('');
 }

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pay | EngageX</title>
+<style>
+  :root{
+    --bg: #0b0c10;
+    --bg-panel: #15171c;
+    --gold-1: #f5d485;
+    --gold-2: #c9922e;
+    --text: #f2f0ea;
+    --text-dim: #9a9ca3;
+    --line: #26292f;
+    --advance: #6fbf8c;
+    --balance: #e08a5b;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background: radial-gradient(circle at 50% -10%, #1c1f26 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display:flex; flex-direction:column; align-items:center;
+    padding: 32px 16px 60px;
+  }
+  .brand{
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold-1);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .brand span{color: var(--text-dim); letter-spacing: 1px;}
+  h1{
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    text-align:center;
+  }
+  .sub{
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-bottom: 28px;
+    text-align:center;
+  }
+  .card{
+    width: 100%;
+    max-width: 420px;
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 18px;
+  }
+  .field-label{
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+  .qty-grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .qty-btn{
+    background: #1d2027;
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 10px 0;
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .qty-btn:hover{ border-color: var(--gold-2); }
+  .qty-btn.active{
+    background: linear-gradient(135deg, var(--gold-1), var(--gold-2));
+    color: #1a1200;
+    font-weight: 700;
+    border-color: transparent;
+  }
+  .custom-row{
+    display:flex; gap:8px; margin-top: 12px;
+  }
+  .custom-row input{
+    flex:1;
+    background:#1d2027;
+    border:1px solid var(--line);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+  }
+  .custom-row button{
+    background:#1d2027;
+    border:1px solid var(--line);
+    color: var(--gold-1);
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    cursor:pointer;
+  }
+  .breakdown{
+    display:flex; flex-direction:column; gap: 10px;
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px dashed var(--line);
+  }
+  .row{ display:flex; justify-content:space-between; font-size: 14px; }
+  .row .label{ color: var(--text-dim); }
+  .row.total .value{ font-weight:700; color: var(--gold-1); font-size: 16px; }
+
+  .pay-options{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .pay-btn{
+    border: none;
+    border-radius: 12px;
+    padding: 14px 8px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    color: #0e0e0e;
+    display:flex; flex-direction:column; gap:2px; align-items:center;
+    transition: transform .12s ease;
+  }
+  .pay-btn:active{ transform: scale(0.97); }
+  .pay-btn.advance{ background: linear-gradient(135deg, #b7e3c6, var(--advance)); }
+  .pay-btn.balance{ background: linear-gradient(135deg, #f2c6a1, var(--balance)); }
+  .pay-btn small{ font-weight:500; font-size: 11px; opacity:.75; }
+
+  .qr-panel{
+    display:none;
+    margin-top: 20px;
+    text-align:center;
+    background:#101216;
+    border:1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .qr-panel.show{ display:block; }
+  .qr-panel img{
+    width: 220px; height: 220px;
+    border-radius: 10px;
+    border: 4px solid #fff;
+    margin-bottom: 14px;
+    object-fit: contain;
+    background:#fff;
+  }
+  .qr-amount{
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--gold-1);
+  }
+  .qr-note{
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+  .biz{
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 10px;
+  }
+  .biz b{ color: var(--text); }
+
+  .whatsapp-fallback{
+    display:none;
+    margin-top: 16px;
+    text-align:center;
+  }
+  .whatsapp-fallback.show{ display:block; }
+  .whatsapp-fallback a{
+    color: var(--gold-1);
+    font-size: 13px;
+    text-decoration: underline;
+  }
+
+  .qty-grid.locked .qty-btn:not(.active){
+    opacity: 0.35;
+    pointer-events: none;
+  }
+  .qty-grid.locked .qty-btn.active{
+    pointer-events: none;
+    cursor: default;
+  }
+  .custom-row.locked{
+    opacity: 0.35;
+    pointer-events: none;
+  }
+  .reset-btn{
+    display: none;
+    width: 100%;
+    margin-top: 16px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .reset-btn:hover{
+    border-color: var(--gold-2);
+    color: var(--gold-1);
+  }
+
+  .footer-note{
+    color: var(--text-dim);
+    font-size: 12px;
+    text-align:center;
+    max-width: 380px;
+    line-height: 1.5;
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="brand">EngageX <span>· Secure Payment</span></div>
+  <h1>Pay for Your Order</h1>
+  <div class="sub">Select your review quantity to see the payment split</div>
+
+  <div class="card">
+    <div class="field-label">Number of reviews ordered</div>
+    <div class="qty-grid" id="qtyGrid"></div>
+    <div class="custom-row">
+      <input type="number" id="customQty" placeholder="Custom quantity (multiple of 5)" step="5" min="5">
+      <button onclick="useCustomQty()">Set</button>
+    </div>
+
+    <div class="breakdown" id="breakdown" style="display:none;">
+      <div class="row"><span class="label">Rate</span><span class="value">₹50 / review</span></div>
+      <div class="row total"><span class="label">Total order value</span><span class="value" id="totalVal">₹0</span></div>
+      <div class="row"><span class="label">Advance (30%)</span><span class="value" id="advVal">₹0</span></div>
+      <div class="row"><span class="label">Balance after delivery (70%)</span><span class="value" id="balVal">₹0</span></div>
+    </div>
+
+    <div class="pay-options" id="payOptions" style="display:none;">
+      <button class="pay-btn advance" onclick="showQR('advance')">
+        Pay Advance <small>30% now</small>
+      </button>
+      <button class="pay-btn balance" onclick="showQR('balance')">
+        Pay Balance <small>70% on delivery</small>
+      </button>
+    </div>
+
+    <button class="reset-btn" id="resetBtn" style="display:none;" onclick="resetSelection()">
+      ↺ Change quantity
+    </button>
+
+    <div class="qr-panel" id="qrPanel">
+      <img id="qrImage" src="" alt="Scan to pay">
+      <div class="qr-amount" id="qrAmount">₹0</div>
+      <div class="qr-note">Scan with any UPI app — Google Pay, PhonePe, Paytm</div>
+      <div class="biz">Paying to <b id="bizName"></b><br><span id="upiIdLine"></span></div>
+    </div>
+
+    <div class="whatsapp-fallback" id="waFallback">
+      <div class="footer-note">This quantity isn't a standard tier. Message us on WhatsApp and we'll send a payment link directly.</div>
+      <a id="waLink" href="#" target="_blank">Contact EngageX on WhatsApp →</a>
+    </div>
+  </div>
+
+  <div class="footer-note">Once payment is done, please share the screenshot on WhatsApp so we can confirm and begin your order.</div>
+
+<script>
+  // ---- CONFIG ----
+  // Fill in your actual UPI ID / name and GitHub-hosted QR paths below.
+  const UPI_NAME = "Aman Chauhan"; // shown on page
+  const UPI_ID = "engagex216-1@oksbi"; // shown for verification
+  const WHATSAPP_NUMBER = "919058544981"; // your WhatsApp number with country code, no + or spaces
+
+  // QR images: place these files in your repo under /assets/qr/
+  // Naming convention: qty{N}-30.png and qty{N}-70.png
+  const TIERS = [20, 25, 30, 35, 40, 45, 50, 55, 60];
+  const RATE = 50;
+
+  function qrPath(qty, stage){
+    return `assets/qr/qty${qty}-${stage}.jpg`; // stage = "30" or "70"
+  }
+
+  let selectedQty = null;
+
+  const qtyGrid = document.getElementById('qtyGrid');
+  TIERS.forEach(q => {
+    const btn = document.createElement('button');
+    btn.className = 'qty-btn';
+    btn.textContent = q;
+    btn.onclick = () => selectQty(q);
+    btn.id = 'qty-' + q;
+    qtyGrid.appendChild(btn);
+  });
+
+  function useCustomQty(){
+    const val = parseInt(document.getElementById('customQty').value, 10);
+    if(!val || val % 5 !== 0 || val < 5){
+      alert('Please enter a valid quantity in multiples of 5.');
+      return;
+    }
+    selectQty(val);
+  }
+
+  function selectQty(q){
+    selectedQty = q;
+    document.querySelectorAll('.qty-btn').forEach(b => b.classList.remove('active'));
+    const match = document.getElementById('qty-' + q);
+    if(match) match.classList.add('active');
+
+    document.getElementById('qrPanel').classList.remove('show');
+
+    const total = q * RATE;
+    const adv = Math.round(total * 0.3);
+    const bal = total - adv;
+
+    document.getElementById('totalVal').textContent = '₹' + total;
+    document.getElementById('advVal').textContent = '₹' + adv;
+    document.getElementById('balVal').textContent = '₹' + bal;
+    document.getElementById('breakdown').style.display = 'flex';
+
+    const isTier = TIERS.includes(q);
+    document.getElementById('payOptions').style.display = isTier ? 'grid' : 'none';
+    document.getElementById('waFallback').classList.toggle('show', !isTier);
+
+    if(!isTier){
+      const msg = encodeURIComponent(`Hi EngageX, I'd like to pay for ${q} reviews. Please send the payment details.`);
+      document.getElementById('waLink').href = `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`;
+    }
+
+    // Lock the selection so it can't be casually changed
+    document.getElementById('qtyGrid').classList.add('locked');
+    document.getElementById('customQty').disabled = true;
+    document.querySelector('.custom-row').classList.add('locked');
+    document.getElementById('resetBtn').style.display = 'block';
+  }
+
+  function resetSelection(){
+    selectedQty = null;
+    document.querySelectorAll('.qty-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('qtyGrid').classList.remove('locked');
+    document.getElementById('customQty').disabled = false;
+    document.getElementById('customQty').value = '';
+    document.querySelector('.custom-row').classList.remove('locked');
+    document.getElementById('breakdown').style.display = 'none';
+    document.getElementById('payOptions').style.display = 'none';
+    document.getElementById('waFallback').classList.remove('show');
+    document.getElementById('qrPanel').classList.remove('show');
+    document.getElementById('resetBtn').style.display = 'none';
+  }
+
+  function showQR(stage){
+    if(!selectedQty) return;
+    const total = selectedQty * RATE;
+    const amount = stage === 'advance' ? Math.round(total * 0.3) : total - Math.round(total * 0.3);
+    const stageNum = stage === 'advance' ? '30' : '70';
+
+    document.getElementById('qrImage').src = qrPath(selectedQty, stageNum);
+    document.getElementById('qrAmount').textContent = '₹' + amount;
+    document.getElementById('qrPanel').classList.add('show');
+    document.getElementById('qrPanel').scrollIntoView({behavior:'smooth', block:'center'});
+  }
+
+  // Pre-select quantity from URL, e.g. payment.html?qty=20
+  const params = new URLSearchParams(window.location.search);
+  const preQty = parseInt(params.get('qty'), 10);
+  if(preQty) selectQty(preQty);
+
+  document.getElementById('bizName').textContent = UPI_NAME;
+  document.getElementById('upiIdLine').textContent = UPI_ID;
+</script>
+
+</body>
+</html>

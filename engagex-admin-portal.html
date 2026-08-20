@@ -60,6 +60,9 @@
   .status-pill.done{background:var(--green-bg); color:#1F8C57;}
   .status-pill.progress{background:var(--orange-bg); color:#B8790E;}
   .status-pill.notstarted{background:#F0F0F6; color:var(--text-dim);}
+  .earn-row{display:flex; gap:14px; flex-wrap:wrap; margin:12px 0 4px; padding:10px 12px; background:var(--purple-bg); border-radius:8px;}
+  .earn-item{font-size:11.5px;}
+  .earn-item b{display:block; font-size:14px; color:var(--purple-dark); font-weight:800;}
   .save-msg{font-size:11.5px; margin-top:8px; display:none;}
   .save-msg.ok{color:var(--green);}
   .save-msg.err{color:var(--red);}
@@ -242,6 +245,11 @@ function renderTasks(tasks){
       <div class="task-name">${safeName}</div>
       <div class="task-meta">${Number(t.currentlyIncreased)||0}/${Number(t.order)||0} done · ${escapeHtml(t.dailyQty)}/day pace · <span class="status-pill ${statusClass(t.status)}">${escapeHtml(t.status)}</span></div>
       <div class="progress-outer"><div class="progress-inner" style="width:${pct}%;"></div></div>
+      <div class="earn-row">
+        <div class="earn-item">Client paid<b>${fmt(t.amountPaid)}</b></div>
+        <div class="earn-item">Remaining<b>${fmt(t.remaining)}</b></div>
+        <div class="earn-item">You earn on completion<b>${fmt(t.adminEarning)}</b></div>
+      </div>
       <div class="task-grid">
         <div class="form-row" style="margin-bottom:0;">
           <label>Status</label>

@@ -23,7 +23,7 @@
     --text-dim:#8D8AA3;
     --radius:12px;
     --shadow:0 1px 2px rgba(30,27,60,0.04), 0 4px 14px rgba(30,27,60,0.05);
-  }
+}
   *{box-sizing:border-box; margin:0; padding:0;}
   body{
     background:var(--bg);
@@ -31,172 +31,165 @@
     font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
     padding:28px;
     min-height:100vh;
-  }
-  .wrap{max-width:1400px; margin:0 auto;}
-
-  .header{
+}
+.wrap{max-width:1400px; margin:0 auto;}
+.header{
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
     margin-bottom:18px;
-  }
-  .header h1{font-size:26px; font-weight:700;}
-  .header p{color:var(--text-dim); font-size:13px; margin-top:4px;}
-  .brand{
+}
+.header h1{font-size:26px; font-weight:700;}
+.header p{color:var(--text-dim); font-size:13px; margin-top:4px;}
+.brand{
     display:flex; align-items:center; gap:8px;
     color:var(--purple-dark); font-weight:700; font-size:14px;
-  }
-  .brand span{width:22px;height:22px;border-radius:7px;background:var(--purple);display:inline-block;}
-
-  .tabs{display:flex; gap:8px; margin-bottom:20px; border-bottom:1px solid var(--line);}
-  .tab-btn{
+}
+.brand span{width:22px;height:22px;border-radius:7px;background:var(--purple);display:inline-block;}
+.tabs{display:flex; gap:8px; margin-bottom:20px; border-bottom:1px solid var(--line);}
+.tab-btn{
     background:none; border:none; cursor:pointer;
     padding:10px 4px; margin-right:20px;
     font-size:14px; font-weight:600; color:var(--text-dim);
     border-bottom:2px solid transparent;
-  }
-  .tab-btn.active{color:var(--purple-dark); border-bottom-color:var(--purple);}
-  .add-profile-btn{
+}
+.tab-btn.active{color:var(--purple-dark); border-bottom-color:var(--purple);}
+.add-profile-btn{
     margin-left:auto;
     background:var(--purple);
     color:#fff; border:none;
     padding:9px 16px; border-radius:8px;
     font-size:13px; font-weight:700; cursor:pointer;
-  }
-  .add-profile-btn:hover{background:var(--purple-dark);}
-  .tabs-row{display:flex; align-items:flex-end; gap:8px;}
-
-  .view{display:none;}
-  .view.active{display:block;}
-
-  .card{
+}
+.add-profile-btn:hover{background:var(--purple-dark);}
+.tabs-row{display:flex; align-items:flex-end; gap:8px;}
+.view{display:none;}
+.view.active{display:block;}
+.card{
     background:var(--panel);
     border:1px solid var(--line);
     border-radius:var(--radius);
     padding:18px;
     box-shadow:var(--shadow);
-  }
-
+}
   /* ===== Calendar view ===== */
-  .layout{display:grid; grid-template-columns:1fr 340px; gap:20px;}
-  .toolbar{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;}
-  .legend{display:flex; gap:16px; flex-wrap:wrap;}
-  .legend-item{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--text-dim);}
-  .dot{width:9px; height:9px; border-radius:3px; display:inline-block;}
-  .dot.purple{background:var(--purple);} .dot.orange{background:var(--orange);} .dot.green{background:var(--green);}
-  .nav{display:flex; align-items:center; gap:8px;}
-  .nav button{background:var(--panel-2); border:1px solid var(--line); color:var(--text); padding:7px 12px; border-radius:8px; cursor:pointer; font-size:13px;}
-  .nav button:hover{border-color:var(--purple);}
-  .month-label{font-weight:600; font-size:15px; min-width:130px; text-align:center;}
-  .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
-  .day-name{text-align:center; font-size:11.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.5px; padding-bottom:6px;}
-  .cell{position:relative; min-height:82px; background:var(--panel-2); border:1px solid var(--line); border-radius:9px; padding:8px; font-size:13px;}
-  .cell.empty{background:transparent; border:none;}
-  .cell.today{border-color:var(--purple); border-width:2px;}
-  .cell .num{font-weight:600; color:var(--text);}
-  .cell.purple{background:var(--purple-bg); border-color:#D9D2F5;}
-  .cell.orange{background:var(--orange-bg); border-color:#F6DFAE;}
-  .cell.green{background:var(--green-bg); border-color:#BFEBD3;}
-  .cell .taskdot{position:absolute; bottom:8px; left:8px; width:6px; height:6px; border-radius:50%;}
-  .cell.purple .taskdot{background:var(--purple);} .cell.orange .taskdot{background:var(--orange);} .cell.green .taskdot{background:var(--green);}
-  .tooltip{position:absolute; top:100%; left:0; z-index:20; background:var(--purple); color:#fff; padding:10px 12px; border-radius:9px; font-size:12px; line-height:1.5; min-width:200px; box-shadow:0 10px 26px rgba(30,27,60,.25); display:none;}
-  .tooltip.behind{background:var(--orange); color:#3A2A05;}
-  .cell:hover .tooltip{display:block;}
-  .tooltip b{display:block; font-size:12.5px; margin-bottom:2px;}
-  .stats-row{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:18px;}
-  .stat{background:var(--panel-2); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px;}
-  .stat .label{font-size:12px; color:var(--purple-dark); font-weight:600;}
-  .stat .value{font-size:20px; font-weight:700; margin-top:4px;}
-  .note{margin-top:16px; background:var(--purple-bg); border-left:3px solid var(--purple); border-radius:8px; padding:12px 14px; font-size:12.5px; color:#4A4570;}
-  .note b{color:var(--purple-dark);}
-  .side-card{margin-bottom:20px;}
-  .side-title{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
-  .side-title h2{font-size:15px; font-weight:700;}
-  .profile-item, .admin-item{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);}
-  .profile-item:last-child, .admin-item:last-child{border-bottom:none;}
-  .avatar{width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0; background:var(--purple-bg); color:var(--purple-dark);}
-  .p-info{flex:1; min-width:0;}
-  .p-info .name{font-size:13.5px; font-weight:600;}
-  .p-info .meta{font-size:11.5px; color:var(--text-dim); margin-top:2px;}
-  .status-pill{font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:20px; white-space:nowrap;}
-  .status-pill.done{background:var(--green-bg); color:#1F8C57;}
-  .status-pill.progress{background:var(--orange-bg); color:#B8790E;}
-  .status-pill.notstarted{background:#F0F0F6; color:var(--text-dim);}
-  .admin-chip{background:var(--panel); border:1px solid var(--line); color:var(--text-dim); font-size:11px; padding:2px 8px; border-radius:6px; margin:2px 4px 0 0; display:inline-block;}
-  .progress-bar-outer{height:5px; background:#EDEDF5; border-radius:4px; margin-top:6px; overflow:hidden;}
-  .progress-bar-inner{height:100%; background:var(--purple); border-radius:4px;}
-
+.layout{display:grid; grid-template-columns:1fr 340px; gap:20px;}
+.toolbar{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;}
+.legend{display:flex; gap:16px; flex-wrap:wrap;}
+.legend-item{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--text-dim);}
+.dot{width:9px; height:9px; border-radius:3px; display:inline-block;}
+.dot.purple{background:var(--purple);} .dot.orange{background:var(--orange);} .dot.green{background:var(--green);}
+.nav{display:flex; align-items:center; gap:8px;}
+.nav button{background:var(--panel-2); border:1px solid var(--line); color:var(--text); padding:7px 12px; border-radius:8px; cursor:pointer; font-size:13px;}
+.nav button:hover{border-color:var(--purple);}
+.month-label{font-weight:600; font-size:15px; min-width:130px; text-align:center;}
+.grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+.day-name{text-align:center; font-size:11.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.5px; padding-bottom:6px;}
+.cell{position:relative; min-height:82px; background:var(--panel-2); border:1px solid var(--line); border-radius:9px; padding:8px; font-size:13px;}
+.cell.empty{background:transparent; border:none;}
+.cell.today{border-color:var(--purple); border-width:2px;}
+.cell .num{font-weight:600; color:var(--text);}
+.cell.purple{background:var(--purple-bg); border-color:#D9D2F5;}
+.cell.orange{background:var(--orange-bg); border-color:#F6DFAE;}
+.cell.green{background:var(--green-bg); border-color:#BFEBD3;}
+.cell .taskdot{position:absolute; bottom:8px; left:8px; width:6px; height:6px; border-radius:50%;}
+.cell.purple .taskdot{background:var(--purple);} .cell.orange .taskdot{background:var(--orange);} .cell.green .taskdot{background:var(--green);}
+.tooltip{position:absolute; top:100%; left:0; z-index:20; background:var(--purple); color:#fff; padding:10px 12px; border-radius:9px; font-size:12px; line-height:1.5; min-width:200px; box-shadow:0 10px 26px rgba(30,27,60,.25); display:none;}
+.tooltip.behind{background:var(--orange); color:#3A2A05;}
+.cell:hover .tooltip{display:block;}
+.tooltip b{display:block; font-size:12.5px; margin-bottom:2px;}
+.stats-row{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:18px;}
+.stat{background:var(--panel-2); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px;}
+.stat .label{font-size:12px; color:var(--purple-dark); font-weight:600;}
+.stat .value{font-size:20px; font-weight:700; margin-top:4px;}
+.note{margin-top:16px; background:var(--purple-bg); border-left:3px solid var(--purple); border-radius:8px; padding:12px 14px; font-size:12.5px; color:#4A4570;}
+.note b{color:var(--purple-dark);}
+.side-card{margin-bottom:20px;}
+.side-title{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
+.side-title h2{font-size:15px; font-weight:700;}
+.profile-item, .admin-item{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);}
+.profile-item:last-child, .admin-item:last-child{border-bottom:none;}
+.avatar{width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0; background:var(--purple-bg); color:var(--purple-dark);}
+.p-info{flex:1; min-width:0;}
+.p-info .name{font-size:13.5px; font-weight:600;}
+.p-info .meta{font-size:11.5px; color:var(--text-dim); margin-top:2px;}
+.status-pill{font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:20px; white-space:nowrap;}
+.status-pill.done{background:var(--green-bg); color:#1F8C57;}
+.status-pill.progress{background:var(--orange-bg); color:#B8790E;}
+.status-pill.notstarted{background:#F0F0F6; color:var(--text-dim);}
+.admin-chip{background:var(--panel); border:1px solid var(--line); color:var(--text-dim); font-size:11px; padding:2px 8px; border-radius:6px; margin:2px 4px 0 0; display:inline-block;}
+.progress-bar-outer{height:5px; background:#EDEDF5; border-radius:4px; margin-top:6px; overflow:hidden;}
+.progress-bar-inner{height:100%; background:var(--purple); border-radius:4px;}
   /* ===== Payments view ===== */
-  .stats-row-pay{display:grid; grid-template-columns:repeat(6,1fr); gap:14px; margin-bottom:20px;}
+.stats-row-pay{display:grid; grid-template-columns:repeat(6,1fr); gap:14px; margin-bottom:20px;}
   @media (max-width:1100px){.stats-row-pay{grid-template-columns:repeat(3,1fr);}}
-  .pay-toolbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:12px; flex-wrap:wrap;}
-  .pay-toolbar h2{font-size:16px; font-weight:700;}
-  .search{background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:8px 12px; font-size:13px; width:220px; color:var(--text);}
-  .search:focus{outline:none; border-color:var(--purple);}
+.pay-toolbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:12px; flex-wrap:wrap;}
+.pay-toolbar h2{font-size:16px; font-weight:700;}
+.search{background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:8px 12px; font-size:13px; width:220px; color:var(--text);}
+.search:focus{outline:none; border-color:var(--purple);}
   table{width:100%; border-collapse:collapse; font-size:13px;}
   thead th{text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:.4px; color:var(--text-dim); padding:10px 12px; border-bottom:1px solid var(--line);}
   tbody td{padding:12px; border-bottom:1px solid var(--line); vertical-align:middle;}
   tbody tr:hover{background:var(--panel-2);}
   tbody tr:last-child td{border-bottom:none;}
-  .client-cell{display:flex; align-items:center; gap:10px;}
-  .client-name{font-weight:600; max-width:230px;}
-  .phone{color:var(--text-dim); font-size:11.5px; margin-top:2px;}
-  .no-phone{color:#C7C4D6; font-style:italic;}
-  .amount{font-weight:600;}
-  .amount.paid{color:var(--green);}
-  .amount.remaining{color:var(--orange);}
-  .amount.remaining.zero{color:var(--text-dim); font-weight:400;}
-  .amount.admin{color:var(--purple-dark);}
-  .amount.profit.pos{color:var(--green);}
-  .amount.profit.neg{color:var(--red);}
-  .pill{font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:20px; display:inline-block;}
-  .pill.settled{background:var(--green-bg); color:#1F8C57;}
-  .pill.due{background:var(--red-bg); color:#B23A31;}
-  .progress-outer{height:6px; background:#EDEDF5; border-radius:4px; margin-top:6px; width:100px; overflow:hidden;}
-  .progress-inner{height:100%; background:var(--green); border-radius:4px;}
+.client-cell{display:flex; align-items:center; gap:10px;}
+.client-name{font-weight:600; max-width:230px;}
+.phone{color:var(--text-dim); font-size:11.5px; margin-top:2px;}
+.no-phone{color:#C7C4D6; font-style:italic;}
+.amount{font-weight:600;}
+.amount.paid{color:var(--green);}
+.amount.remaining{color:var(--orange);}
+.amount.remaining.zero{color:var(--text-dim); font-weight:400;}
+.amount.admin{color:var(--purple-dark);}
+.amount.profit.pos{color:var(--green);}
+.amount.profit.neg{color:var(--red);}
+.pill{font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:20px; display:inline-block;}
+.pill.settled{background:var(--green-bg); color:#1F8C57;}
+.pill.due{background:var(--red-bg); color:#B23A31;}
+.progress-outer{height:6px; background:#EDEDF5; border-radius:4px; margin-top:6px; width:100px; overflow:hidden;}
+.progress-inner{height:100%; background:var(--green); border-radius:4px;}
   tfoot td{padding:12px; font-weight:700; border-top:2px solid var(--line); background:var(--panel-2);}
-
-  .load-error{font-size:12px; color:var(--red); margin-top:10px; display:none;}
-
+.load-error{font-size:12px; color:var(--red); margin-top:10px; display:none;}
+.settle-btn{background:var(--green); border:none; color:#fff; padding:5px 12px; border-radius:6px; font-size:11.5px; font-weight:700; cursor:pointer; margin-top:4px;}
+.settle-btn:hover{opacity:.9;}
+.settle-btn:disabled{opacity:.6; cursor:not-allowed;}
   /* ===== Add Profile modal ===== */
-  .modal-backdrop{
+.modal-backdrop{
     display:none; position:fixed; inset:0; background:rgba(20,18,40,0.4);
     align-items:center; justify-content:center; z-index:100; padding:20px;
-  }
-  .modal-backdrop.open{display:flex;}
-  .modal{
+}
+.modal-backdrop.open{display:flex;}
+.modal{
     background:var(--panel); border-radius:var(--radius); padding:24px;
     width:100%; max-width:480px; max-height:90vh; overflow-y:auto;
     box-shadow:0 20px 60px rgba(20,18,40,0.3);
-  }
-  .modal h3{font-size:17px; font-weight:700; margin-bottom:4px;}
-  .modal .sub{font-size:12.5px; color:var(--text-dim); margin-bottom:18px;}
-  .form-row{margin-bottom:14px;}
-  .form-row label{display:block; font-size:12px; font-weight:600; color:var(--text); margin-bottom:5px;}
-  .form-row input, .form-row select{
+}
+.modal h3{font-size:17px; font-weight:700; margin-bottom:4px;}
+.modal .sub{font-size:12.5px; color:var(--text-dim); margin-bottom:18px;}
+.form-row{margin-bottom:14px;}
+.form-row label{display:block; font-size:12px; font-weight:600; color:var(--text); margin-bottom:5px;}
+.form-row input, .form-row select{
     width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:8px;
     font-size:13px; background:var(--panel-2); color:var(--text);
-  }
-  .form-row input:focus, .form-row select:focus{outline:none; border-color:var(--purple);}
-  .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
-  .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:18px;}
-  .btn-secondary{background:var(--panel-2); border:1px solid var(--line); color:var(--text); padding:9px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;}
-  .btn-primary{background:var(--purple); border:none; color:#fff; padding:9px 16px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer;}
-  .btn-primary:disabled{opacity:0.6; cursor:not-allowed;}
-  .form-error{font-size:12px; color:var(--red); margin-top:6px; display:none;}
-  .form-success{font-size:12px; color:var(--green); margin-top:6px; display:none;}
-
+}
+.form-row input:focus, .form-row select:focus{outline:none; border-color:var(--purple);}
+.form-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:18px;}
+.btn-secondary{background:var(--panel-2); border:1px solid var(--line); color:var(--text); padding:9px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;}
+.btn-primary{background:var(--purple); border:none; color:#fff; padding:9px 16px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer;}
+.btn-primary:disabled{opacity:0.6; cursor:not-allowed;}
+.form-error{font-size:12px; color:var(--red); margin-top:6px; display:none;}
+.form-success{font-size:12px; color:var(--green); margin-top:6px; display:none;}
   @media (max-width: 900px){
-    .layout{grid-template-columns:1fr;}
-    .stats-row-pay{grid-template-columns:repeat(2,1fr);}
+.layout{grid-template-columns:1fr;}
+.stats-row-pay{grid-template-columns:repeat(2,1fr);}
     table{display:block; overflow-x:auto;}
-    .form-grid{grid-template-columns:1fr;}
-  }
+.form-grid{grid-template-columns:1fr;}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
-
   <div class="header">
     <div>
       <h1>EngageX Admin</h1>
@@ -204,7 +197,6 @@
     </div>
     <div class="brand"><span></span>EngageX</div>
   </div>
-
   <div class="tabs-row">
     <div class="tabs">
       <button class="tab-btn active" data-tab="calendar">Task Calendar</button>
@@ -212,9 +204,7 @@
     </div>
     <button class="add-profile-btn" id="openModalBtn">+ Add Profile</button>
   </div>
-
   <div class="load-error" id="loadError">Couldn't reach the backend — showing demo data. Check GAS_WEB_APP_URL.</div>
-
   <!-- ============ CALENDAR VIEW ============ -->
   <div class="view active" id="view-calendar">
     <div class="layout">
@@ -253,7 +243,6 @@
       </div>
     </div>
   </div>
-
   <!-- ============ PAYMENTS VIEW ============ -->
   <div class="view" id="view-payments">
     <div class="stats-row-pay">
@@ -278,23 +267,19 @@
           <tr><td>Total</td><td id="footOrders"></td><td id="footPaid"></td><td id="footRemaining"></td><td id="footAdmin"></td><td id="footProfit"></td><td></td></tr>
         </tfoot>
       </table>
-      <div class="note"><b>Note:</b> "Settled" means Remaining is ₹0. Profit is Remaining − Admin payout, per client.</div>
+      <div class="note"><b>Note:</b> "Settled" means Remaining is ₹0. Click "Settle" on a Due client once you've received their remaining payment — this zeroes their balance and logs the payout entry in the assigned admin's panel. Profit is Remaining − Admin payout, per client.</div>
     </div>
   </div>
-
 </div>
-
 <!-- ============ ADD PROFILE MODAL ============ -->
 <div class="modal-backdrop" id="modalBackdrop">
   <div class="modal">
     <h3>Add Profile / Client</h3>
     <div class="sub">This writes one row into Profiles, REVIEWS TRACKER, and Copy of Profiles — all linked by name.</div>
-
     <div class="form-row">
       <label>Profile / Client Name *</label>
       <input type="text" id="f_name" placeholder="e.g. Sunrise Dental Clinic">
     </div>
-
     <div class="form-grid">
       <div class="form-row">
         <label>Daily Qty</label>
@@ -305,7 +290,6 @@
         <input type="number" id="f_order" value="0" min="0">
       </div>
     </div>
-
     <div class="form-grid">
       <div class="form-row">
         <label>Start Date</label>
@@ -316,12 +300,10 @@
         <select id="f_adminId"></select>
       </div>
     </div>
-
     <div class="form-row">
       <label>Phone Number</label>
       <input type="text" id="f_phone" placeholder="+91 …">
     </div>
-
     <div class="form-grid">
       <div class="form-row">
         <label>Amount Paid</label>
@@ -332,34 +314,31 @@
         <input type="number" id="f_remaining" value="0" min="0">
       </div>
     </div>
-
     <div class="form-row">
       <label>Admin Payment</label>
       <input type="number" id="f_adminPayment" value="0" min="0">
     </div>
-
     <div class="form-error" id="formError"></div>
     <div class="form-success" id="formSuccess"></div>
-
     <div class="modal-actions">
       <button class="btn-secondary" id="cancelModalBtn">Cancel</button>
       <button class="btn-primary" id="submitModalBtn">Add & Save to Sheet</button>
     </div>
   </div>
 </div>
-
 <script>
 /* ============================================================
-   CONFIG — point this at your deployed Apps Script Web App URL
-   ============================================================ */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzfhqeq_tSVzSHt0fsVJoW-mRr2H-4XfPluOArw0D-VDPfet9Ovm1sDHMykQm0_FZB7/exec";
-// GET  ?action=getDashboardData  -> { profiles, bookings, admins, clients }
+CONFIG — point this at your deployed Apps Script Web App URL
+============================================================ */
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyVkeMu_EXgWhUYIhxkqLkR5wXVBB6LHEog_nqGWigHkcgjvQCRqUJTmIbbkUtWNokh/exec";
+// GET ?action=getDashboardData -> { profiles, bookings, admins, clients }
 // POST { action:"addClientProfile", payload:{...} } -> { success, name }
+// POST { action:"settleClient", payload:{ profileName } } -> { success, name, adminId, amount, warning? }
 // See Code-additions.gs
 
 /* ============================================================
-   DEMO DATA — used automatically if the fetch fails.
-   ============================================================ */
+DEMO DATA — used automatically if the fetch fails.
+============================================================ */
 const DEMO_DATA = {
   profiles: [
     { name: "Car Land Rentals", dailyQty: 5 },
@@ -437,7 +416,6 @@ function buildDayMap(data){
   const profileCap = {};
   data.profiles.forEach(p => profileCap[p.name] = p.dailyQty || 5);
   const today = new Date(); today.setHours(0,0,0,0);
-
   data.bookings.forEach(b => {
     if(!b.startDate) return;
     const capacity = profileCap[b.profileName] || 5;
@@ -446,7 +424,6 @@ function buildDayMap(data){
     if(b.endDate){ end = new Date(b.endDate + "T00:00:00"); }
     else { const plannedDays = Math.max(1, Math.ceil(b.order/capacity)); end = addDays(start, plannedDays-1); }
     const totalDays = daysBetween(start,end)+1;
-
     for(let i=0;i<totalDays;i++){
       const d = addDays(start,i);
       const key = toKey(d);
@@ -476,7 +453,6 @@ function renderCalendar(dayMap){
   const today = new Date();
   const cells = [];
   for(let i=0;i<startOffset;i++) cells.push(`<div class="cell empty"></div>`);
-
   for(let day=1; day<=daysInMonth; day++){
     const dateObj = new Date(y,m,day);
     const key = toKey(dateObj);
@@ -503,6 +479,7 @@ function statusClass(status){
   if(s==="in progress") return "progress";
   return "notstarted";
 }
+
 function initialsOf(name){ return name.split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
 
 function renderProfiles(profiles, bookings){
@@ -511,27 +488,27 @@ function renderProfiles(profiles, bookings){
     const status = b ? b.status : "Not started";
     const pct = b && b.order ? Math.min(100, Math.round((b.currentlyIncreased/b.order)*100)) : 0;
     return `<div class="profile-item">
-      <div class="avatar">${initialsOf(p.name)}</div>
-      <div class="p-info">
-        <div class="name">${p.name}</div>
-        <div class="meta">${p.dailyQty} Tasks/Day ${b?`· ${b.currentlyIncreased}/${b.order}`:''}</div>
+<div class="avatar">${initialsOf(p.name)}</div>
+<div class="p-info">
+<div class="name">${p.name}</div>
+<div class="meta">${p.dailyQty} Tasks/Day ${b?`· ${b.currentlyIncreased}/${b.order}`:''}</div>
         ${b?`<div class="progress-bar-outer"><div class="progress-bar-inner" style="width:${pct}%;"></div></div>`:''}
-      </div>
-      <span class="status-pill ${statusClass(status)}">${status||'Not started'}</span>
-    </div>`;
+</div>
+<span class="status-pill ${statusClass(status)}">${status||'Not started'}</span>
+</div>`;
   }).join('');
 }
 
 function renderAdmins(admins){
   document.getElementById('adminList').innerHTML = admins.map(a => `
-    <div class="admin-item">
-      <div class="avatar">${initialsOf(a.name)}</div>
-      <div class="p-info">
-        <div class="name">${a.name}</div>
-        <div class="meta">Managing ${a.profileNames.length} profile${a.profileNames.length===1?'':'s'}</div>
-        <div>${a.profileNames.map(n => `<span class="admin-chip">${n.length>22?n.slice(0,22)+'…':n}</span>`).join('')}</div>
-      </div>
-    </div>`).join('');
+<div class="admin-item">
+<div class="avatar">${initialsOf(a.name)}</div>
+<div class="p-info">
+<div class="name">${a.name}</div>
+<div class="meta">Managing ${a.profileNames.length} profile${a.profileNames.length===1?'':'s'}</div>
+<div>${a.profileNames.map(n => `<span class="admin-chip">${n.length>22?n.slice(0,22)+'…':n}</span>`).join('')}</div>
+</div>
+</div>`).join('');
 }
 
 /* ---------- Payments logic ---------- */
@@ -544,6 +521,8 @@ function clientProfit(c){
   const settled = Number(c.remaining||0)===0;
   return settled ? 0 : (Number(c.remaining||0) - Number(c.adminPayment||0));
 }
+
+function escapeAttr(str){ return String(str ?? '').replace(/"/g, '&quot;'); }
 
 function renderPayments(clients){
   const totalOrders = clients.reduce((s,c)=>s+Number(c.order||0),0);
@@ -571,22 +550,54 @@ function renderPayments(clients){
     const settled = Number(c.remaining||0)===0;
     const profit = clientProfit(c);
     return `<tr>
-      <td><div class="client-cell"><div class="avatar">${initialsOf(c.name)}</div>
-        <div><div class="client-name">${c.name}</div><div class="phone ${c.phone?'':'no-phone'}">${c.phone||'No phone on file'}</div></div>
-      </div></td>
-      <td>${c.order}</td>
-      <td><div class="amount paid">${fmt(c.amountPaid)}</div><div class="progress-outer"><div class="progress-inner" style="width:${pct}%;"></div></div></td>
-      <td class="amount remaining ${settled?'zero':''}">${fmt(c.remaining)}</td>
-      <td class="amount admin">${fmt(c.adminPayment)}</td>
-      <td class="amount profit ${profit>=0?'pos':'neg'}">${fmt(profit)}</td>
-      <td><span class="pill ${settled?'settled':'due'}">${settled?'Settled':'Due'}</span></td>
-    </tr>`;
+<td><div class="client-cell"><div class="avatar">${initialsOf(c.name)}</div>
+<div><div class="client-name">${c.name}</div><div class="phone ${c.phone?'':'no-phone'}">${c.phone||'No phone on file'}</div></div>
+</div></td>
+<td>${c.order}</td>
+<td><div class="amount paid">${fmt(c.amountPaid)}</div><div class="progress-outer"><div class="progress-inner" style="width:${pct}%;"></div></div></td>
+<td class="amount remaining ${settled?'zero':''}">${fmt(c.remaining)}</td>
+<td class="amount admin">${fmt(c.adminPayment)}</td>
+<td class="amount profit ${profit>=0?'pos':'neg'}">${fmt(profit)}</td>
+<td>
+<span class="pill ${settled?'settled':'due'}">${settled?'Settled':'Due'}</span>
+${settled ? '' : `<div><button class="settle-btn" data-name="${escapeAttr(c.name)}">Settle</button></div>`}
+</td>
+</tr>`;
   }).join('');
 }
 
 document.getElementById('searchBox').addEventListener('input', (e) => {
   const q = e.target.value.toLowerCase();
   renderPayments(state.data.clients.filter(c => c.name.toLowerCase().includes(q)));
+});
+
+/* ---------- Settle button ---------- */
+document.getElementById('clientRows').addEventListener('click', async (e) => {
+  const btn = e.target.closest('.settle-btn');
+  if(!btn) return;
+  const name = btn.dataset.name;
+
+  if(!GAS_WEB_APP_URL.startsWith("http")){
+    alert("Backend not connected yet (GAS_WEB_APP_URL not set) — can't settle right now.");
+    return;
+  }
+  if(!confirm(`Mark "${name}" as settled and log the admin payout?`)) return;
+
+  btn.disabled = true; btn.textContent = 'Settling…';
+  try{
+    const res = await fetch(GAS_WEB_APP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'settleClient', payload: { profileName: name } })
+    });
+    const json = await res.json();
+    if(!json.success) throw new Error(json.error || 'Could not settle');
+    if(json.warning) alert(json.warning); // e.g. client settled but name didn't match Assignments, so no admin was credited
+    await loadData(); // refresh so the row shows Settled + ₹0 remaining, and stats update
+  }catch(err){
+    alert('Settle failed: ' + err.message);
+    btn.disabled = false; btn.textContent = 'Settle';
+  }
 });
 
 /* ---------- Render everything ---------- */
@@ -665,7 +676,6 @@ document.getElementById('submitModalBtn').onclick = async () => {
     });
     const json = await res.json();
     if(!json.success) throw new Error(json.error || 'Unknown error');
-
     okEl.textContent = `Saved "${name}" to the sheet.`;
     okEl.style.display = 'block';
     await loadData(); // refresh both views with the new row

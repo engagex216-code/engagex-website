@@ -537,12 +537,20 @@ function renderAdmins(admins){
 /* ---------- Payments logic ---------- */
 function fmt(n){ return '₹' + Number(n||0).toLocaleString('en-IN'); }
 
+function clientProfit(c){
+  // Once a client is settled (remaining = 0), the admin payout for that
+  // profile was already handled at settlement time — don't let it show
+  // as a negative profit against future/other clients.
+  const settled = Number(c.remaining||0)===0;
+  return settled ? 0 : (Number(c.remaining||0) - Number(c.adminPayment||0));
+}
+
 function renderPayments(clients){
   const totalOrders = clients.reduce((s,c)=>s+Number(c.order||0),0);
   const totalPaid = clients.reduce((s,c)=>s+Number(c.amountPaid||0),0);
   const totalRemaining = clients.reduce((s,c)=>s+Number(c.remaining||0),0);
   const totalAdmin = clients.reduce((s,c)=>s+Number(c.adminPayment||0),0);
-  const totalProfit = totalRemaining - totalAdmin;
+  const totalProfit = clients.reduce((s,c)=>s+clientProfit(c),0);
 
   document.getElementById('statClients').textContent = clients.length;
   document.getElementById('statOrders').textContent = totalOrders.toLocaleString('en-IN');
@@ -561,7 +569,7 @@ function renderPayments(clients){
     const total = Number(c.amountPaid||0)+Number(c.remaining||0);
     const pct = total ? Math.round((c.amountPaid/total)*100) : 100;
     const settled = Number(c.remaining||0)===0;
-    const profit = Number(c.remaining||0) - Number(c.adminPayment||0);
+    const profit = clientProfit(c);
     return `<tr>
       <td><div class="client-cell"><div class="avatar">${initialsOf(c.name)}</div>
         <div><div class="client-name">${c.name}</div><div class="phone ${c.phone?'':'no-phone'}">${c.phone||'No phone on file'}</div></div>

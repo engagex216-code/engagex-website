@@ -640,7 +640,7 @@ document.getElementById('submitModalBtn').onclick = async () => {
   };
 
   if(!GAS_WEB_APP_URL.startsWith("http")){
-    errEl.textContent = 'Backend not connected yet (GAS_WEB_APP_URL not set) — this profile can\\'t be saved to the sheet right now.';
+    errEl.textContent = "Backend not connected yet (GAS_WEB_APP_URL not set) — this profile can't be saved to the sheet right now.";
     errEl.style.display = 'block';
     return;
   }

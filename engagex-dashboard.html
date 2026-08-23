@@ -395,8 +395,11 @@
       <span class="va-switch"><input type="checkbox" id="vaWakeToggle"><span class="va-slider"></span></span>
     </label>
   </div>
+  <div class="va-wake-row" style="border-bottom:1px solid var(--line);">
+    <button id="vaTestVoice" style="width:100%; background:var(--panel); border:1px solid var(--line); color:var(--text); padding:7px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">🔊 Test Voice Output</button>
+  </div>
   <div class="va-body" id="vaBody">
-    <div class="va-msg hint">Try: "How many days is Astro working?" or "Which clients still owe money?"</div>
+    <div class="va-msg hint">Say "Give me an update" for a full status report — instant, no AI wait. Or ask anything: "How many days is Astro working?"</div>
   </div>
   <div class="va-foot">
     <button class="va-mic" id="vaMic" title="Speak">🎙️</button>
@@ -434,7 +437,7 @@ VOICE ASSISTANT — Gemini free-tier, client-side only
     addMsg('bot', "Got it — key saved in this browser. Ask away.");
   };
 
-  fab.onclick = () => { panel.classList.add('open'); refreshKeyRow(); input.focus(); };
+  fab.onclick = () => { unlockSpeech(); panel.classList.add('open'); refreshKeyRow(); input.focus(); };
   closeBtn.onclick = () => panel.classList.remove('open');
 
   function addMsg(role, text){
@@ -492,7 +495,7 @@ VOICE ASSISTANT — Gemini free-tier, client-side only
       body: JSON.stringify({
         system_instruction: { parts: [{ text: systemPrompt }] },
         contents: [{ role: 'user', parts: [{ text: question }] }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 200 }
+        generationConfig: { temperature: 0.2, maxOutputTokens: 300 }
       })
     });
     return res;
@@ -503,7 +506,7 @@ VOICE ASSISTANT — Gemini free-tier, client-side only
     if(!key){ refreshKeyRow(); throw new Error("Paste your Gemini API key above first."); }
     const systemPrompt = "You are a voice assistant embedded in EngageX's admin dashboard. " +
       "Answer ONLY using the JSON data provided below — it reflects the current on-screen state (profiles, bookings, clients, payments). " +
-      "Be concise (1-3 short sentences), speak naturally since your answer will be read aloud, and never invent numbers not in the data. " +
+      "Be concise (2-4 short sentences), speak naturally since your answer will be read aloud, and never invent numbers not in the data. " +
       "If something isn't in the data, say so plainly.\n\nDATA:\n" + buildDataSummary();
 
     let lastErr = null;
@@ -516,6 +519,18 @@ VOICE ASSISTANT — Gemini free-tier, client-side only
         const text = json?.candidates?.[0]?.content?.parts?.map(p=>p.text).join('') || "I couldn't work that out from the data.";
         return text.trim();
       }
+      if(res.status === 503){
+        // transient overload — wait a beat and retry the same model once
+        await new Promise(r => setTimeout(r, 1200));
+        try{
+          const retryRes = await callGemini(model, key, systemPrompt, question);
+          if(retryRes.ok){
+            const json = await retryRes.json();
+            const text = json?.candidates?.[0]?.content?.parts?.map(p=>p.text).join('') || "I couldn't work that out from the data.";
+            return text.trim();
+          }
+        }catch(e){}
+      }
       const errText = await res.text().catch(()=> '');
       lastErr = new Error('Gemini request failed (' + res.status + '). ' + errText.slice(0,150));
       if(res.status !== 404) break; // only keep falling back on "model not found" style errors
@@ -524,17 +539,54 @@ VOICE ASSISTANT — Gemini free-tier, client-side only
   }
 
   function speak(text){
-    if(!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = 1; u.pitch = 1;
-    window.speechSynthesis.speak(u);
+    // placeholder — real implementation defined below, after unlockSpeech setup
   }
+
+  // Deterministic "give me an update" command — computed directly from the
+  // sheet data, no Gemini call involved, so it's instant and never fails.
+  function buildStatusUpdate(){
+    const data = state.data;
+    if(!data) return "No data loaded yet.";
+    const today = new Date().toISOString().slice(0,10);
+    const lines = [];
+    data.profiles.forEach(p => {
+      const booking = data.bookings.find(b => b.profileName === p.name);
+      if(!booking) return;
+      const cap = p.dailyQty || 5;
+      const order = Number(booking.order || 0);
+      const done = Number(booking.currentlyIncreased || 0);
+      const isDone = booking.status && booking.status.toLowerCase() === 'done';
+      const plannedDays = Math.max(1, Math.ceil(order / cap));
+      let daysRemaining = 0;
+      if(!isDone && booking.startDate){
+        const start = new Date(booking.startDate + "T00:00:00");
+        const elapsed = Math.max(0, Math.floor((new Date(today) - start) / 86400000) + 1);
+        const daysWorking = Math.min(elapsed, plannedDays);
+        daysRemaining = Math.max(0, plannedDays - daysWorking);
+      }
+      if(isDone){
+        lines.push(`${p.name} is done — ${order} reviews delivered.`);
+      }else{
+        const remainingReviews = Math.max(0, order - done);
+        lines.push(`${p.name}: ${done} of ${order} reviews done, ${remainingReviews} left, about ${daysRemaining} day${daysRemaining===1?'':'s'} remaining.`);
+      }
+    });
+    if(lines.length === 0) return "No active profiles with bookings right now.";
+    return lines.join(' ');
+  }
+  const UPDATE_INTENT = /\b(give me an?|status|daily|quick|full)?\s*update\b|how('s| is| are)?\s*(everything|things|it all)?\s*going|progress\s*report/i;
 
   async function handleAsk(question){
     if(!question || !question.trim()) return;
     addMsg('user', question);
     input.value = '';
+    if(UPDATE_INTENT.test(question)){
+      const summary = buildStatusUpdate();
+      addMsg('bot', summary);
+      speak(summary);
+      body.scrollTop = body.scrollHeight;
+      return;
+    }
     const loadingEl = addMsg('bot', 'Thinking…');
     try{
       const answer = await askGemini(question);
@@ -546,7 +598,7 @@ VOICE ASSISTANT — Gemini free-tier, client-side only
     body.scrollTop = body.scrollHeight;
   }
 
-  sendBtn.onclick = () => handleAsk(input.value);
+  sendBtn.onclick = () => { unlockSpeech(); handleAsk(input.value); };
   input.addEventListener('keydown', (e) => { if(e.key === 'Enter') handleAsk(input.value); });
 
   const subStatus = document.getElementById('vaSubStatus');
@@ -564,15 +616,45 @@ VOICE ASSISTANT — Gemini free-tier, client-side only
   // speak() pauses wake-word listening while talking, so the assistant
   // doesn't hear its own answer and re-trigger itself.
   let suppressWake = false;
-  const _origSpeak = speak;
+  let speechUnlocked = false;
+  let currentUtterance = null; // Safari can silently drop speech if the
+                                // utterance object gets garbage-collected
+                                // mid-speak — keeping a live reference fixes it.
   speak = function(text){
     if(!('speechSynthesis' in window)) return;
     suppressWake = true;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    u.onend = () => { suppressWake = false; };
-    u.onerror = () => { suppressWake = false; };
+    u.rate = 1; u.pitch = 1;
+    u.onend = () => { suppressWake = false; currentUtterance = null; };
+    u.onerror = () => { suppressWake = false; currentUtterance = null; };
+    currentUtterance = u;
     window.speechSynthesis.speak(u);
+  };
+  // iOS Safari only allows speechSynthesis.speak() to fire voice output when
+  // called synchronously inside a user tap — an async Gemini fetch in between
+  // breaks that chain and iOS silently blocks the reply. Priming it with a
+  // silent utterance right on the tap keeps the audio session open so the
+  // *real* answer (spoken later, after the fetch resolves) still plays.
+  // NOTE: this cannot override the iPhone's physical mute/silent switch —
+  // Safari mutes speechSynthesis whenever that switch is on, by OS design.
+  function unlockSpeech(){
+    if(speechUnlocked || !('speechSynthesis' in window)) return;
+    try{
+      const u = new SpeechSynthesisUtterance(' ');
+      u.volume = 0;
+      window.speechSynthesis.speak(u);
+      speechUnlocked = true;
+    }catch(e){}
+  }
+
+  // Isolates whether silence is a code bug or the iPhone's mute switch/Focus
+  // mode — this fires speak() directly inside the tap, the most reliable
+  // possible condition for iOS audio.
+  document.getElementById('vaTestVoice').onclick = () => {
+    speechUnlocked = true;
+    speak("This is a test. Can you hear me?");
+    addMsg('bot', '🔊 Test sent — if you heard nothing, check the mute switch on the side of your phone, or Silent/Focus mode.');
   };
 
   const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -581,18 +663,35 @@ VOICE ASSISTANT — Gemini free-tier, client-side only
 
   if(SpeechRec){
     // ---- Push-to-talk mic ----
+    // continuous + interim results, with a short silence timer before we
+    // actually process the question — mobile Safari otherwise sometimes
+    // cuts recognition off mid-sentence, truncating what you asked.
     const rec = new SpeechRec();
     rec.lang = 'en-IN';
-    rec.interimResults = false;
+    rec.continuous = true;
+    rec.interimResults = true;
     rec.maxAlternatives = 1;
     let listening = false;
-    rec.onresult = (e) => handleAsk(e.results[0][0].transcript);
+    let finalTranscript = '';
+    let silenceTimer = null;
+    rec.onresult = (e) => {
+      for(let i = e.resultIndex; i < e.results.length; i++){
+        if(e.results[i].isFinal) finalTranscript += e.results[i][0].transcript + ' ';
+      }
+      clearTimeout(silenceTimer);
+      silenceTimer = setTimeout(() => { try{ rec.stop(); }catch(err){} }, 1200);
+    };
     rec.onend = () => {
       listening = false; micBtn.classList.remove('on'); fab.classList.remove('listening');
+      clearTimeout(silenceTimer);
+      const q = finalTranscript.trim();
+      finalTranscript = '';
+      if(q) handleAsk(q);
       if(wakeArmed) armWake(); // resume always-listening after a manual question
     };
     rec.onerror = () => { listening = false; micBtn.classList.remove('on'); fab.classList.remove('listening'); };
     micBtn.onclick = () => {
+      unlockSpeech();
       if(listening){ rec.stop(); return; }
       if(wakeArmed) disarmWake(true);
       listening = true;
@@ -677,7 +776,7 @@ VOICE ASSISTANT — Gemini free-tier, client-side only
       if(wakeRec){ try{ wakeRec.onend = null; wakeRec.stop(); }catch(e){} }
       if(!silent) setStatus('Ask about profiles, progress, payments');
     }
-    wakeToggle.onchange = () => { wakeToggle.checked ? armWake() : disarmWake(); };
+    wakeToggle.onchange = () => { unlockSpeech(); wakeToggle.checked ? armWake() : disarmWake(); };
     if(localStorage.getItem(WAKE_STORAGE) === '1'){
       armWake(); // resume on reload — works once mic permission was already granted
     }

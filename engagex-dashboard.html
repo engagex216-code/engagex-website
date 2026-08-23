@@ -196,6 +196,49 @@
     table{display:block; overflow-x:auto;}
 .form-grid{grid-template-columns:1fr;}
 }
+  /* ===== Voice Assistant widget ===== */
+.va-fab{
+    position:fixed; right:22px; bottom:22px; width:56px; height:56px; border-radius:50%;
+    background:var(--purple); color:#fff; border:none; box-shadow:0 8px 24px rgba(109,91,208,.4);
+    font-size:22px; cursor:pointer; z-index:200; display:flex; align-items:center; justify-content:center;
+    transition:transform .15s ease;
+}
+.va-fab:hover{transform:scale(1.06);}
+.va-fab.listening{background:var(--red); animation:va-pulse 1.1s infinite;}
+  @keyframes va-pulse{0%{box-shadow:0 0 0 0 rgba(229,88,77,.5);}70%{box-shadow:0 0 0 16px rgba(229,88,77,0);}100%{box-shadow:0 0 0 0 rgba(229,88,77,0);}}
+.va-panel{
+    position:fixed; right:22px; bottom:90px; width:340px; max-height:70vh;
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:0 16px 48px rgba(20,18,40,.25); z-index:200; display:none; flex-direction:column; overflow:hidden;
+}
+.va-panel.open{display:flex;}
+.va-head{padding:14px 16px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;}
+.va-head b{font-size:14px;}
+.va-head .va-sub{font-size:11px; color:var(--text-dim); margin-top:2px;}
+.va-close{background:none; border:none; font-size:16px; cursor:pointer; color:var(--text-dim);}
+.va-body{flex:1; overflow-y:auto; padding:12px 14px; display:flex; flex-direction:column; gap:10px; font-size:13px;}
+.va-msg{padding:9px 12px; border-radius:10px; max-width:85%; line-height:1.4;}
+.va-msg.user{align-self:flex-end; background:var(--purple); color:#fff; border-bottom-right-radius:3px;}
+.va-msg.bot{align-self:flex-start; background:var(--panel-2); border:1px solid var(--line); border-bottom-left-radius:3px;}
+.va-msg.hint{align-self:center; color:var(--text-dim); font-size:11.5px; text-align:center; background:none;}
+.va-foot{padding:10px 12px; border-top:1px solid var(--line); display:flex; gap:8px; align-items:center;}
+.va-mic{width:38px; height:38px; border-radius:50%; border:none; background:var(--purple-bg); color:var(--purple-dark); font-size:16px; cursor:pointer; flex-shrink:0;}
+.va-mic.on{background:var(--red-bg); color:#B23A31;}
+.va-input{flex:1; padding:8px 11px; border:1px solid var(--line); border-radius:8px; font-size:13px; background:var(--panel-2); color:var(--text);}
+.va-input:focus{outline:none; border-color:var(--purple);}
+.va-send{background:var(--purple); border:none; color:#fff; padding:8px 12px; border-radius:8px; font-size:12.5px; font-weight:700; cursor:pointer;}
+.va-key-row{padding:10px 14px; background:var(--purple-bg); font-size:11.5px; color:#4A4570; display:flex; gap:8px; align-items:center;}
+.va-key-row input{flex:1; padding:6px 9px; border:1px solid #D9D2F5; border-radius:6px; font-size:11.5px;}
+.va-key-row button{background:var(--purple); border:none; color:#fff; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;}
+.va-wake-row{padding:9px 14px; border-bottom:1px solid var(--line); background:var(--panel-2);}
+.va-wake-label{display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text); cursor:pointer; gap:10px;}
+.va-switch{position:relative; display:inline-block; width:36px; height:20px; flex-shrink:0;}
+.va-switch input{opacity:0; width:0; height:0;}
+.va-slider{position:absolute; cursor:pointer; inset:0; background:#D8D6E8; border-radius:20px; transition:.15s;}
+.va-slider:before{content:""; position:absolute; height:15px; width:15px; left:3px; top:2.5px; background:#fff; border-radius:50%; transition:.15s;}
+.va-switch input:checked + .va-slider{background:var(--purple);}
+.va-switch input:checked + .va-slider:before{transform:translateX(16px);}
+.va-fab.wake-armed{box-shadow:0 8px 24px rgba(109,91,208,.4), 0 0 0 3px var(--purple-bg);}
 </style>
 </head>
 <body>
@@ -336,6 +379,298 @@
     </div>
   </div>
 </div>
+<!-- ============ VOICE ASSISTANT WIDGET ============ -->
+<button class="va-fab" id="vaFab" title="Ask about your dashboard">🎤</button>
+<div class="va-panel" id="vaPanel">
+  <div class="va-head">
+    <div><b>EngageX Assistant</b><div class="va-sub" id="vaSubStatus">Ask about profiles, progress, payments</div></div>
+    <button class="va-close" id="vaClose">✕</button>
+  </div>
+  <div class="va-key-row" id="vaKeyRow">
+    <input type="password" id="vaKeyInput" placeholder="Paste Gemini API key…">
+    <button id="vaKeySave">Save</button>
+  </div>
+  <div class="va-wake-row" id="vaWakeRow">
+    <label class="va-wake-label"><span>🗣️ "Hey Manager" always-listening</span>
+      <span class="va-switch"><input type="checkbox" id="vaWakeToggle"><span class="va-slider"></span></span>
+    </label>
+  </div>
+  <div class="va-body" id="vaBody">
+    <div class="va-msg hint">Try: "How many days is Astro working?" or "Which clients still owe money?"</div>
+  </div>
+  <div class="va-foot">
+    <button class="va-mic" id="vaMic" title="Speak">🎙️</button>
+    <input class="va-input" id="vaInput" placeholder="Type or tap the mic…">
+    <button class="va-send" id="vaSend">Ask</button>
+  </div>
+</div>
+<script>
+/* ============================================================
+VOICE ASSISTANT — Gemini free-tier, client-side only
+============================================================ */
+(function(){
+  const KEY_STORAGE = 'engagex_gemini_key';
+  const GEMINI_MODEL = 'gemini-2.0-flash';
+  const fab = document.getElementById('vaFab');
+  const panel = document.getElementById('vaPanel');
+  const closeBtn = document.getElementById('vaClose');
+  const body = document.getElementById('vaBody');
+  const input = document.getElementById('vaInput');
+  const sendBtn = document.getElementById('vaSend');
+  const micBtn = document.getElementById('vaMic');
+  const keyRow = document.getElementById('vaKeyRow');
+  const keyInput = document.getElementById('vaKeyInput');
+  const keySave = document.getElementById('vaKeySave');
+
+  function getKey(){ return localStorage.getItem(KEY_STORAGE) || ''; }
+  function refreshKeyRow(){ keyRow.style.display = getKey() ? 'none' : 'flex'; }
+  refreshKeyRow();
+  keySave.onclick = () => {
+    const v = keyInput.value.trim();
+    if(!v) return;
+    localStorage.setItem(KEY_STORAGE, v);
+    keyInput.value = '';
+    refreshKeyRow();
+    addMsg('bot', "Got it — key saved in this browser. Ask away.");
+  };
+
+  fab.onclick = () => { panel.classList.add('open'); refreshKeyRow(); input.focus(); };
+  closeBtn.onclick = () => panel.classList.remove('open');
+
+  function addMsg(role, text){
+    const el = document.createElement('div');
+    el.className = 'va-msg ' + role;
+    el.textContent = text;
+    body.appendChild(el);
+    body.scrollTop = body.scrollHeight;
+    return el;
+  }
+
+  // Build a compact, current snapshot of whatever's on screen (real data or demo)
+  function buildDataSummary(){
+    const data = state.data;
+    if(!data) return "{}";
+    const today = new Date().toISOString().slice(0,10);
+    const profiles = data.profiles.map(p => {
+      const booking = data.bookings.find(b => b.profileName === p.name);
+      let daysWorking = null, daysRemaining = null;
+      if(booking && booking.startDate){
+        const cap = p.dailyQty || 5;
+        const plannedDays = Math.max(1, Math.ceil(booking.order / cap));
+        const start = new Date(booking.startDate + "T00:00:00");
+        const elapsed = Math.max(0, Math.floor((new Date(today) - start) / 86400000) + 1);
+        daysWorking = booking.status.toLowerCase() === 'done' ? plannedDays : Math.min(elapsed, plannedDays);
+        daysRemaining = Math.max(0, plannedDays - daysWorking);
+      }
+      return {
+        name: p.name, dailyQty: p.dailyQty,
+        status: booking ? booking.status : 'Not started',
+        order: booking ? booking.order : null,
+        currentlyIncreased: booking ? booking.currentlyIncreased : 0,
+        startDate: booking ? booking.startDate : null,
+        endDate: booking ? booking.endDate : null,
+        daysWorkingSoFar: daysWorking, estimatedDaysRemaining: daysRemaining
+      };
+    });
+    const clients = data.clients.map(c => ({
+      name: c.name, order: c.order, amountPaid: c.amountPaid,
+      remaining: c.remaining, adminPayment: c.adminPayment,
+      settled: Number(c.remaining||0) === 0
+    }));
+    return JSON.stringify({ today, profiles, clients, admins: data.admins }, null, 0);
+  }
+
+  async function askGemini(question){
+    const key = getKey();
+    if(!key){ refreshKeyRow(); throw new Error("Paste your Gemini API key above first."); }
+    const systemPrompt = "You are a voice assistant embedded in EngageX's admin dashboard. " +
+      "Answer ONLY using the JSON data provided below — it reflects the current on-screen state (profiles, bookings, clients, payments). " +
+      "Be concise (1-3 short sentences), speak naturally since your answer will be read aloud, and never invent numbers not in the data. " +
+      "If something isn't in the data, say so plainly.\n\nDATA:\n" + buildDataSummary();
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(key)}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: 'user', parts: [{ text: question }] }],
+        generationConfig: { temperature: 0.2, maxOutputTokens: 200 }
+      })
+    });
+    if(!res.ok){
+      const errText = await res.text().catch(()=> '');
+      throw new Error('Gemini request failed (' + res.status + '). ' + errText.slice(0,150));
+    }
+    const json = await res.json();
+    const text = json?.candidates?.[0]?.content?.parts?.map(p=>p.text).join('') || "I couldn't work that out from the data.";
+    return text.trim();
+  }
+
+  function speak(text){
+    if(!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 1; u.pitch = 1;
+    window.speechSynthesis.speak(u);
+  }
+
+  async function handleAsk(question){
+    if(!question || !question.trim()) return;
+    addMsg('user', question);
+    input.value = '';
+    const loadingEl = addMsg('bot', 'Thinking…');
+    try{
+      const answer = await askGemini(question);
+      loadingEl.textContent = answer;
+      speak(answer);
+    }catch(err){
+      loadingEl.textContent = 'Error: ' + err.message;
+    }
+    body.scrollTop = body.scrollHeight;
+  }
+
+  sendBtn.onclick = () => handleAsk(input.value);
+  input.addEventListener('keydown', (e) => { if(e.key === 'Enter') handleAsk(input.value); });
+
+  const subStatus = document.getElementById('vaSubStatus');
+  function setStatus(text){ subStatus.textContent = text; }
+  function playBeep(){
+    try{
+      const ctx = new (window.AudioContext||window.webkitAudioContext)();
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 880; g.gain.value = 0.07;
+      o.start(); o.stop(ctx.currentTime + 0.12);
+    }catch(e){}
+  }
+
+  // speak() pauses wake-word listening while talking, so the assistant
+  // doesn't hear its own answer and re-trigger itself.
+  let suppressWake = false;
+  const _origSpeak = speak;
+  speak = function(text){
+    if(!('speechSynthesis' in window)) return;
+    suppressWake = true;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.onend = () => { suppressWake = false; };
+    u.onerror = () => { suppressWake = false; };
+    window.speechSynthesis.speak(u);
+  };
+
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const WAKE_STORAGE = 'engagex_wake_enabled';
+  const wakeToggle = document.getElementById('vaWakeToggle');
+
+  if(SpeechRec){
+    // ---- Push-to-talk mic ----
+    const rec = new SpeechRec();
+    rec.lang = 'en-IN';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    let listening = false;
+    rec.onresult = (e) => handleAsk(e.results[0][0].transcript);
+    rec.onend = () => {
+      listening = false; micBtn.classList.remove('on'); fab.classList.remove('listening');
+      if(wakeArmed) armWake(); // resume always-listening after a manual question
+    };
+    rec.onerror = () => { listening = false; micBtn.classList.remove('on'); fab.classList.remove('listening'); };
+    micBtn.onclick = () => {
+      if(listening){ rec.stop(); return; }
+      if(wakeArmed) disarmWake(true);
+      listening = true;
+      micBtn.classList.add('on');
+      fab.classList.add('listening');
+      panel.classList.add('open');
+      rec.start();
+    };
+
+    // ---- "Hey Manager" always-listening wake word ----
+    let wakeArmed = false;
+    let awaitingCommand = false;
+    let wakeRec = null;
+
+    function buildWakeRec(){
+      const wr = new SpeechRec();
+      wr.lang = 'en-IN';
+      wr.continuous = true;
+      wr.interimResults = false;
+      wr.maxAlternatives = 1;
+      wr.onresult = (e) => {
+        if(suppressWake || listening) return;
+        for(let i = e.resultIndex; i < e.results.length; i++){
+          const result = e.results[i];
+          if(!result.isFinal) continue;
+          const transcript = result[0].transcript.trim();
+          if(awaitingCommand){
+            awaitingCommand = false;
+            setStatus('👂 Listening for "Hey Manager"…');
+            panel.classList.add('open');
+            handleAsk(transcript);
+            continue;
+          }
+          const m = transcript.match(/^(hey|hi|hello|ok|okay)?\s*,?\s*manager[,.:]?\s*(.*)$/i);
+          if(m){
+            playBeep();
+            panel.classList.add('open');
+            const remainder = (m[2]||'').trim();
+            if(remainder){
+              handleAsk(remainder);
+            }else{
+              awaitingCommand = true;
+              setStatus('🎙️ Yes? Ask your question…');
+            }
+          }
+        }
+      };
+      wr.onerror = (e) => {
+        if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
+          wakeArmed = false;
+          wakeToggle.checked = false;
+          localStorage.setItem(WAKE_STORAGE, '0');
+          fab.classList.remove('wake-armed');
+          setStatus('Mic permission denied — always-listening off');
+        }
+        // other errors (no-speech/network hiccups) just fall through to onend, which restarts
+      };
+      wr.onend = () => {
+        if(wakeArmed && !listening){
+          try{ wr.start(); }
+          catch(e){ setTimeout(() => { if(wakeArmed && !listening){ try{ wr.start(); }catch(_){} } }, 400); }
+        }
+      };
+      return wr;
+    }
+
+    function armWake(){
+      wakeArmed = true;
+      wakeToggle.checked = true;
+      fab.classList.add('wake-armed');
+      localStorage.setItem(WAKE_STORAGE, '1');
+      wakeRec = buildWakeRec();
+      try{ wakeRec.start(); }catch(e){}
+      setStatus('👂 Listening for "Hey Manager"…');
+    }
+    function disarmWake(silent){
+      wakeArmed = false;
+      awaitingCommand = false;
+      wakeToggle.checked = false;
+      fab.classList.remove('wake-armed');
+      localStorage.setItem(WAKE_STORAGE, '0');
+      if(wakeRec){ try{ wakeRec.onend = null; wakeRec.stop(); }catch(e){} }
+      if(!silent) setStatus('Ask about profiles, progress, payments');
+    }
+    wakeToggle.onchange = () => { wakeToggle.checked ? armWake() : disarmWake(); };
+    if(localStorage.getItem(WAKE_STORAGE) === '1'){
+      armWake(); // resume on reload — works once mic permission was already granted
+    }
+  }else{
+    micBtn.disabled = true;
+    micBtn.title = 'Voice input not supported in this browser — type instead';
+    document.getElementById('vaWakeRow').style.display = 'none';
+  }
+})();
+</script>
 <script>
 /* ============================================================
 CONFIG — point this at your deployed Apps Script Web App URL

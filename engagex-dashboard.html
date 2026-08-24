@@ -399,7 +399,7 @@
     <button id="vaTestVoice" style="width:100%; background:var(--panel); border:1px solid var(--line); color:var(--text); padding:7px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">🔊 Test Voice Output</button>
   </div>
   <div class="va-body" id="vaBody">
-    <div class="va-msg hint">Say "Give me an update" for a full status report — instant, no AI wait. Or ask anything: "How many days is Astro working?"</div>
+    <div class="va-msg hint">Say "Give me an update" for full status, or "How many reviews today" for what changed since you opened the dashboard today.</div>
   </div>
   <div class="va-foot">
     <button class="va-mic" id="vaMic" title="Speak">🎙️</button>
@@ -542,6 +542,44 @@ VOICE ASSISTANT — Gemini free-tier, client-side only
     // placeholder — real implementation defined below, after unlockSpeech setup
   }
 
+  // ---- "Today" review tracking ----
+  // Your sheet only stores a running total, not a daily log — so "today"
+  // means "since the dashboard was first opened today", captured as a
+  // baseline snapshot in this browser. Not a true midnight-to-midnight count.
+  const BASELINE_STORAGE = 'engagex_daily_baseline';
+  function todayStr(){ return new Date().toISOString().slice(0,10); }
+  function captureBaselineIfNeeded(){
+    if(!state.data) return;
+    let stored = null;
+    try{ stored = JSON.parse(localStorage.getItem(BASELINE_STORAGE) || 'null'); }catch(e){}
+    if(stored && stored.date === todayStr()) return; // already captured today
+    const baseline = {};
+    (state.data.bookings || []).forEach(b => { baseline[b.profileName] = Number(b.currentlyIncreased || 0); });
+    localStorage.setItem(BASELINE_STORAGE, JSON.stringify({ date: todayStr(), baseline }));
+  }
+  window.engageXCaptureBaseline = captureBaselineIfNeeded;
+  captureBaselineIfNeeded(); // in case data already loaded before this script ran
+
+  function buildTodayUpdate(){
+    const data = state.data;
+    if(!data) return "No data loaded yet.";
+    let stored = null;
+    try{ stored = JSON.parse(localStorage.getItem(BASELINE_STORAGE) || 'null'); }catch(e){}
+    if(!stored || stored.date !== todayStr()){
+      return "I don't have a starting point for today yet — that gets captured the first time the dashboard loads each day. Reload the page, then ask again.";
+    }
+    const lines = [];
+    let total = 0;
+    (data.bookings || []).forEach(b => {
+      const before = stored.baseline.hasOwnProperty(b.profileName) ? stored.baseline[b.profileName] : Number(b.currentlyIncreased || 0);
+      const now = Number(b.currentlyIncreased || 0);
+      const delta = now - before;
+      if(delta > 0){ lines.push(`${b.profileName} up ${delta}`); total += delta; }
+    });
+    if(total === 0) return "No new reviews recorded yet today.";
+    return `${total} new review${total===1?'':'s'} today — ` + lines.join(', ') + '.';
+  }
+
   // Deterministic "give me an update" command — computed directly from the
   // sheet data, no Gemini call involved, so it's instant and never fails.
   function buildStatusUpdate(){
@@ -574,12 +612,20 @@ VOICE ASSISTANT — Gemini free-tier, client-side only
     if(lines.length === 0) return "No active profiles with bookings right now.";
     return lines.join(' ');
   }
+  const TODAY_INTENT = /\btoday\b/i;
   const UPDATE_INTENT = /\b(give me an?|status|daily|quick|full)?\s*update\b|how('s| is| are)?\s*(everything|things|it all)?\s*going|progress\s*report/i;
 
   async function handleAsk(question){
     if(!question || !question.trim()) return;
     addMsg('user', question);
     input.value = '';
+    if(TODAY_INTENT.test(question) && UPDATE_INTENT.test(question)){
+      const summary = buildTodayUpdate();
+      addMsg('bot', summary);
+      speak(summary);
+      body.scrollTop = body.scrollHeight;
+      return;
+    }
     if(UPDATE_INTENT.test(question)){
       const summary = buildStatusUpdate();
       addMsg('bot', summary);
@@ -687,13 +733,20 @@ VOICE ASSISTANT — Gemini free-tier, client-side only
       const q = finalTranscript.trim();
       finalTranscript = '';
       if(q) handleAsk(q);
-      if(wakeArmed) armWake(); // resume always-listening after a manual question
+      if(wakeWasPausedForMic){ wakeWasPausedForMic = false; if(wakeArmed) armWake(); }
     };
-    rec.onerror = () => { listening = false; micBtn.classList.remove('on'); fab.classList.remove('listening'); };
+    rec.onerror = () => {
+      listening = false; micBtn.classList.remove('on'); fab.classList.remove('listening');
+      if(wakeWasPausedForMic){ wakeWasPausedForMic = false; if(wakeArmed) armWake(); }
+    };
+    let wakeWasPausedForMic = false;
     micBtn.onclick = () => {
       unlockSpeech();
       if(listening){ rec.stop(); return; }
-      if(wakeArmed) disarmWake(true);
+      if(wakeArmed){
+        wakeWasPausedForMic = true;
+        if(wakeRec){ try{ wakeRec.onend = null; wakeRec.stop(); }catch(e){} }
+      }
       listening = true;
       micBtn.classList.add('on');
       fab.classList.add('listening');
@@ -751,8 +804,16 @@ VOICE ASSISTANT — Gemini free-tier, client-side only
       };
       wr.onend = () => {
         if(wakeArmed && !listening){
-          try{ wr.start(); }
-          catch(e){ setTimeout(() => { if(wakeArmed && !listening){ try{ wr.start(); }catch(_){} } }, 400); }
+          let attempts = 0;
+          const tryStart = () => {
+            if(!wakeArmed || listening) return;
+            try{ wr.start(); }
+            catch(e){
+              attempts++;
+              if(attempts <= 5) setTimeout(tryStart, 400 * attempts);
+            }
+          };
+          tryStart();
         }
       };
       return wr;
@@ -780,6 +841,13 @@ VOICE ASSISTANT — Gemini free-tier, client-side only
     if(localStorage.getItem(WAKE_STORAGE) === '1'){
       armWake(); // resume on reload — works once mic permission was already granted
     }
+    // iOS suspends background mic sessions when the tab is backgrounded/locked;
+    // when you come back to it, try to pick listening back up automatically.
+    document.addEventListener('visibilitychange', () => {
+      if(document.visibilityState === 'visible' && wakeArmed && !listening){
+        try{ wakeRec && wakeRec.start(); }catch(e){}
+      }
+    });
   }else{
     micBtn.disabled = true;
     micBtn.title = 'Voice input not supported in this browser — type instead';
@@ -881,6 +949,7 @@ async function loadData(){
     state.data = await res.json();
     state.usingDemo = false;
     document.getElementById('loadError').style.display = 'none';
+    if(window.engageXCaptureBaseline) window.engageXCaptureBaseline();
   }catch(err){
     state.data = DEMO_DATA;
     state.usingDemo = true;

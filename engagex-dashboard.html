@@ -107,6 +107,7 @@
 .side-card{margin-bottom:20px;}
 .side-title{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
 .side-title h2{font-size:15px; font-weight:700;}
+.month-tag{font-size:11.5px; font-weight:500; color:var(--text-dim); margin-left:6px;}
 .profile-item, .admin-item{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);}
 .profile-item:last-child, .admin-item:last-child{border-bottom:none;}
 .avatar{width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0; background:var(--purple-bg); color:var(--purple-dark);}
@@ -291,21 +292,21 @@
           <div class="stat"><div class="label">In Progress</div><div class="value" id="statProgress">–</div></div>
           <div class="stat"><div class="label">Completed</div><div class="value" id="statDone">–</div></div>
         </div>
-        <div class="note"><b>Note:</b> Each day compares planned pace (Order ÷ Daily Qty) against "Currently increased" progress. Purple = on pace, orange = behind pace.</div>
+        <div class="note"><b>Note:</b> Each day compares planned pace (Order ÷ Daily Qty) against "Currently increased" progress. Purple = on pace, orange = behind pace. Stats above and the panels to the right/below now reflect only the month currently shown in the calendar.</div>
       </div>
       <div>
         <div class="card side-card">
-          <div class="side-title"><h2>Profiles</h2></div>
+          <div class="side-title"><h2>Profiles <span class="month-tag" id="profilesMonthTag"></span></h2></div>
           <div id="profileList"></div>
         </div>
         <div class="card side-card">
-          <div class="side-title"><h2>Admin Assignments</h2></div>
+          <div class="side-title"><h2>Admin Assignments <span class="month-tag" id="adminsMonthTag"></span></h2></div>
           <div id="adminList"></div>
         </div>
       </div>
     </div>
     <div class="card" style="margin-top:16px;">
-      <div class="side-title"><h2>Profiles By Admin</h2></div>
+      <div class="side-title"><h2>Profiles By Admin <span class="month-tag" id="sectionsMonthTag"></span></h2></div>
       <div id="adminSections"></div>
     </div>
   </div>
@@ -954,6 +955,48 @@ function escapeHtml(str){
   }[ch]));
 }
 
+/* ============================================================
+NEW: month-scoping helpers
+Used to filter the Profiles / Admin Assignments / Profiles By
+Admin panels (and the three stat boxes above the calendar) down
+to whatever month state.current is pointing at — the same month
+shown by the Today/‹/› calendar controls.
+============================================================ */
+function startOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+function endOfMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0); }
+// Parses the "yyyy-MM-dd" strings the backend sends.
+function parseYMD(str){
+  if(!str) return null;
+  const parts = String(str).split('-').map(Number);
+  if(parts.length !== 3 || parts.some(isNaN)) return null;
+  return new Date(parts[0], parts[1]-1, parts[2]);
+}
+// A booking counts as "ongoing" in the viewed month if its start..end
+// range overlaps that month at all. No start date -> can't place it in
+// time, so it's shown in every month rather than silently hidden.
+// No end date -> treated as still ongoing (open-ended work).
+function bookingInMonth(b, monthDate){
+  const mStart = startOfMonth(monthDate), mEnd = endOfMonth(monthDate);
+  const bStart = parseYMD(b.startDate);
+  if(!bStart) return true;
+  const bEnd = parseYMD(b.endDate) || new Date(9999, 11, 31);
+  return bStart <= mEnd && bEnd >= mStart;
+}
+// Returns {profiles, bookings, admins} narrowed to the given month.
+function getMonthScopedData(data, monthDate){
+  const bookings = data.bookings.filter(b => bookingInMonth(b, monthDate));
+  const bookedNames = new Set(bookings.map(b => b.profileName));
+  const namesWithAnyBooking = new Set(data.bookings.map(b => b.profileName));
+  // Keep a profile if it has no booking at all (can't be placed in time —
+  // show always) or if its booking falls in this month.
+  const profiles = data.profiles.filter(p => !namesWithAnyBooking.has(p.name) || bookedNames.has(p.name));
+  const admins = data.admins.map(a => ({ ...a, profileNames: a.profileNames.filter(n => bookedNames.has(n)) }));
+  return { profiles, bookings, admins };
+}
+function monthLabelText(d){
+  return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
 async function loadData(){
   try{
     if(!GAS_WEB_APP_URL.startsWith("http")) throw new Error("no url configured");
@@ -1052,6 +1095,10 @@ function statusClass(status){
 }
 function initialsOf(name){ return name.split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
 function renderProfiles(profiles, bookings){
+  if(!profiles.length){
+    document.getElementById('profileList').innerHTML = '<div class="admin-section-empty">No profiles ongoing this month.</div>';
+    return;
+  }
   document.getElementById('profileList').innerHTML = profiles.map(p => {
     const b = bookings.find(x => x.profileName === p.name);
     const status = b ? b.status : "Not started";
@@ -1073,14 +1120,15 @@ function renderAdmins(admins){
 <div class="avatar">${initialsOf(a.name)}</div>
 <div class="p-info">
 <div class="name">${escapeHtml(a.name)}</div>
-<div class="meta">Managing ${a.profileNames.length} profile${a.profileNames.length===1?'':'s'}</div>
-<div>${a.profileNames.map(n => `<span class="admin-chip">${escapeHtml(n.length>22?n.slice(0,22)+'…':n)}</span>`).join('')}</div>
+<div class="meta">Managing ${a.profileNames.length} profile${a.profileNames.length===1?'':'s'} this month</div>
+<div>${a.profileNames.length ? a.profileNames.map(n => `<span class="admin-chip">${escapeHtml(n.length>22?n.slice(0,22)+'…':n)}</span>`).join('') : '<span class="admin-section-empty" style="padding:0;">None this month</span>'}</div>
 </div>
 </div>`).join('');
 }
 // "Profiles By Admin" — groups every profile's live status under the admin
 // whose adminId is on its booking, so you can see each admin's whole
 // workload (status + pace + progress) in one place, grouped section by section.
+// Now takes the already month-scoped {profiles, bookings, admins} bundle.
 function renderAdminSections(data){
   const today = new Date(); today.setHours(0,0,0,0);
   const byAdmin = {};
@@ -1121,11 +1169,30 @@ function renderOneAdminSection(name, initials, items){
 </div>
 <span class="status-pill ${statusClass(b.status)}">${escapeHtml(b.status||'Not started')}</span>
 ${b.status && b.status.toLowerCase()!=='done' ? `<span class="pace-pill ${onTrack?'ontrack':'behind'}">${onTrack?'On pace':'Behind'}</span>` : ''}
-</div>`).join('') : `<div class="admin-section-empty">No profiles assigned.</div>`;
+</div>`).join('') : `<div class="admin-section-empty">No profiles ongoing this month.</div>`;
   return `<div class="admin-section">
 <div class="admin-section-head"><div class="avatar">${initials}</div><span class="name">${escapeHtml(name)}</span><span class="count">${items.length} profile${items.length===1?'':'s'}</span></div>
 ${rows}
 </div>`;
+}
+
+/* ---------- NEW: month-scoped render pass ----------
+   Recomputes Profiles / Admin Assignments / Profiles By Admin and the
+   three stat boxes above the calendar for whatever month state.current
+   points at. Call this any time state.current changes or fresh data loads. */
+function renderMonthScoped(){
+  const data = state.data;
+  const monthData = getMonthScopedData(data, state.current);
+  const tag = `— ${monthLabelText(state.current)}`;
+  document.getElementById('profilesMonthTag').textContent = tag;
+  document.getElementById('adminsMonthTag').textContent = tag;
+  document.getElementById('sectionsMonthTag').textContent = tag;
+  document.getElementById('statProfiles').textContent = monthData.profiles.length;
+  document.getElementById('statProgress').textContent = monthData.bookings.filter(b=>b.status.toLowerCase()==="in progress").length;
+  document.getElementById('statDone').textContent = monthData.bookings.filter(b=>b.status.toLowerCase()==="done").length;
+  renderProfiles(monthData.profiles, monthData.bookings);
+  renderAdmins(monthData.admins);
+  renderAdminSections(monthData);
 }
 
 /* ---------- Payments logic ---------- */
@@ -1227,19 +1294,26 @@ document.getElementById('searchBox').addEventListener('input', (e) => {
 function renderAll(){
   const data = state.data;
   const dayMap = buildDayMap(data);
-  document.getElementById('statProfiles').textContent = data.profiles.length;
-  document.getElementById('statProgress').textContent = data.bookings.filter(b=>b.status.toLowerCase()==="in progress").length;
-  document.getElementById('statDone').textContent = data.bookings.filter(b=>b.status.toLowerCase()==="done").length;
   renderCalendar(dayMap);
-  renderProfiles(data.profiles, data.bookings);
-  renderAdmins(data.admins);
-  renderAdminSections(data);
+  renderMonthScoped();          // CHANGED: profiles/admins/sections/stat boxes now month-scoped
   renderPayments(data.clients);
   populateAdminSelect(data.admins);
 }
-document.getElementById('prevBtn').onclick = () => { state.current.setMonth(state.current.getMonth()-1); renderCalendar(buildDayMap(state.data)); };
-document.getElementById('nextBtn').onclick = () => { state.current.setMonth(state.current.getMonth()+1); renderCalendar(buildDayMap(state.data)); };
-document.getElementById('todayBtn').onclick = () => { state.current = new Date(); renderCalendar(buildDayMap(state.data)); };
+document.getElementById('prevBtn').onclick = () => {
+  state.current.setMonth(state.current.getMonth()-1);
+  renderCalendar(buildDayMap(state.data));
+  renderMonthScoped();          // CHANGED: re-filter the panels for the new month
+};
+document.getElementById('nextBtn').onclick = () => {
+  state.current.setMonth(state.current.getMonth()+1);
+  renderCalendar(buildDayMap(state.data));
+  renderMonthScoped();          // CHANGED: re-filter the panels for the new month
+};
+document.getElementById('todayBtn').onclick = () => {
+  state.current = new Date();
+  renderCalendar(buildDayMap(state.data));
+  renderMonthScoped();          // CHANGED: re-filter the panels for the new month
+};
 
 /* ---------- Add Profile modal ---------- */
 const modalBackdrop = document.getElementById('modalBackdrop');

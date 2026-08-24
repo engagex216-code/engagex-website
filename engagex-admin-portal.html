@@ -53,6 +53,13 @@
   .summary-label{font-size:11.5px; color:var(--text-dim); font-weight:600; margin-bottom:4px;}
   .summary-value{font-size:17px; font-weight:800; color:var(--text);}
 
+  /* ---- NEW: month switcher ---- */
+  .month-switch{display:flex; align-items:center; justify-content:space-between; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:12px 16px; margin-bottom:16px;}
+  .month-switch button{background:var(--purple-bg); border:none; color:var(--purple-dark); width:32px; height:32px; border-radius:8px; font-size:16px; font-weight:800; cursor:pointer; line-height:1;}
+  .month-switch button:active{opacity:.75;}
+  .month-switch #monthLabel{font-size:14.5px; font-weight:700;}
+  .month-switch .today-btn{width:auto; padding:0 10px; font-size:11.5px; font-weight:700; color:var(--purple-dark); background:var(--panel-2); border:1px solid var(--line);}
+
   .task-card{margin-bottom:14px;}
   .task-name{font-size:15px; font-weight:700; margin-bottom:2px;}
   .task-meta{font-size:12px; color:var(--text-dim); margin-bottom:12px;}
@@ -123,6 +130,16 @@
       </div>
     </div>
 
+    <!-- NEW: month switcher -->
+    <div class="month-switch">
+      <button id="prevMonthBtn" aria-label="Previous month">‹</button>
+      <div id="monthLabel">—</div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button class="today-btn" id="todayMonthBtn">This month</button>
+        <button id="nextMonthBtn" aria-label="Next month">›</button>
+      </div>
+    </div>
+
     <div id="taskList"></div>
     <div class="refresh-row"><button class="btn-secondary" id="refreshBtn">Refresh</button></div>
   </div>
@@ -134,6 +151,8 @@ const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzfhqeq_tSVzSHt
 
 let session = null; // { adminId, password, adminName }
 let isLoading = false;
+let allTasks = [];               // NEW: unfiltered tasks from the last successful load
+let viewMonth = startOfMonth(new Date()); // NEW: first-of-month Date being viewed
 
 function fmt(n){ return '₹' + Number(n||0).toLocaleString('en-IN'); }
 function statusClass(status){
@@ -148,6 +167,50 @@ function escapeHtml(str){
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
   }[ch]));
 }
+
+/* ---- NEW: month-filter helpers ---- */
+function startOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+function endOfMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0); }
+// Parses the "yyyy-MM-dd" strings the backend sends (formatDate_ in the .gs file).
+function parseYMD(str){
+  if(!str) return null;
+  const parts = String(str).split('-').map(Number);
+  if(parts.length !== 3 || parts.some(isNaN)) return null;
+  return new Date(parts[0], parts[1]-1, parts[2]);
+}
+// A task counts as "ongoing" in the viewed month if its start..end range
+// overlaps that month at all. No start date -> we can't place it in time,
+// so it's shown in every month rather than silently hidden. No end date ->
+// treated as still ongoing (open-ended work).
+function taskInMonth(task, monthDate){
+  const mStart = startOfMonth(monthDate);
+  const mEnd = endOfMonth(monthDate);
+  const tStart = parseYMD(task.startDate);
+  if(!tStart) return true;
+  const tEnd = parseYMD(task.endDate) || new Date(9999, 11, 31);
+  return tStart <= mEnd && tEnd >= mStart;
+}
+function renderMonthLabel(){
+  document.getElementById('monthLabel').textContent =
+    viewMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+function applyMonthFilterAndRender(){
+  renderMonthLabel();
+  renderTasks(allTasks.filter(t => taskInMonth(t, viewMonth)));
+}
+
+document.getElementById('prevMonthBtn').onclick = () => {
+  viewMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth()-1, 1);
+  applyMonthFilterAndRender();
+};
+document.getElementById('nextMonthBtn').onclick = () => {
+  viewMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth()+1, 1);
+  applyMonthFilterAndRender();
+};
+document.getElementById('todayMonthBtn').onclick = () => {
+  viewMonth = startOfMonth(new Date());
+  applyMonthFilterAndRender();
+};
 
 /* ---- session persistence (this is a real hosted page, not a preview,
    so localStorage is fine here — see note in project docs about moving
@@ -251,7 +314,7 @@ document.getElementById('refreshBtn').onclick = () => {
 function renderTasks(tasks){
   const list = document.getElementById('taskList');
   if(!tasks.length){
-    list.innerHTML = '<div class="empty-note">No profiles assigned to you yet.</div>';
+    list.innerHTML = '<div class="empty-note">No profiles were ongoing in this month.</div>';
     return;
   }
   list.innerHTML = tasks.map((t) => {
@@ -314,6 +377,10 @@ function renderTasks(tasks){
       try{
         const result = await updateProgress(name, status, increased);
         if(!result.success) throw new Error(result.error || 'Could not save');
+        // keep in-memory copy in sync so re-filtering (month switch) doesn't
+        // revert to stale numbers before the next refresh
+        const t = allTasks.find(x => x.profileName === name);
+        if(t){ t.status = status; t.currentlyIncreased = increased; }
         msgEl.textContent = 'Saved.';
         msgEl.className = 'save-msg ok';
         msgEl.style.display = 'block';
@@ -352,7 +419,8 @@ async function loadDashboard(){
       `${Number(data.totalReviewsCompleted)||0} / ${Number(data.totalReviewsAssigned)||0}`;
     document.getElementById('earningsSummary').textContent =
       `${fmt(data.totalReceived)} / ${fmt(data.totalEarningPotential)}`;
-    renderTasks(data.tasks);
+    allTasks = data.tasks || [];           // NEW: keep the full set
+    applyMonthFilterAndRender();           // NEW: render only the current month's tasks
   }catch(err){
     document.getElementById('taskList').innerHTML = '<div class="empty-note">Couldn\u2019t load your data. Check your connection and tap Refresh.</div>';
   }finally{
@@ -363,6 +431,7 @@ async function loadDashboard(){
 
 /* ---- boot ---- */
 (function init(){
+  renderMonthLabel();
   const existing = loadSession();
   if(existing && existing.adminId && existing.password){
     session = existing;

@@ -53,7 +53,6 @@
   .summary-label{font-size:11.5px; color:var(--text-dim); font-weight:600; margin-bottom:4px;}
   .summary-value{font-size:17px; font-weight:800; color:var(--text);}
 
-  /* ---- NEW: month switcher ---- */
   .month-switch{display:flex; align-items:center; justify-content:space-between; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:12px 16px; margin-bottom:16px;}
   .month-switch button{background:var(--purple-bg); border:none; color:var(--purple-dark); width:32px; height:32px; border-radius:8px; font-size:16px; font-weight:800; cursor:pointer; line-height:1;}
   .month-switch button:active{opacity:.75;}
@@ -130,7 +129,6 @@
       </div>
     </div>
 
-    <!-- NEW: month switcher -->
     <div class="month-switch">
       <button id="prevMonthBtn" aria-label="Previous month">‹</button>
       <div id="monthLabel">—</div>
@@ -151,8 +149,8 @@ const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyuRJruC-6i9bkg
 
 let session = null; // { adminId, password, adminName }
 let isLoading = false;
-let allTasks = [];               // NEW: unfiltered tasks from the last successful load
-let viewMonth = startOfMonth(new Date()); // NEW: first-of-month Date being viewed
+let allTasks = [];
+let viewMonth = startOfMonth(new Date());
 
 function fmt(n){ return '₹' + Number(n||0).toLocaleString('en-IN'); }
 function statusClass(status){
@@ -161,27 +159,48 @@ function statusClass(status){
   if(s==="in progress") return "progress";
   return "notstarted";
 }
-// Defense-in-depth: escape any sheet-sourced text before it goes into innerHTML.
 function escapeHtml(str){
   return String(str ?? '').replace(/[&<>"']/g, ch => ({
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
   }[ch]));
 }
 
-/* ---- NEW: month-filter helpers ---- */
+/* ============================================================
+   NEW: same XHR workaround already used on the main dashboard.
+   Plain fetch() to an Apps Script Web App can follow the POST's 302
+   redirect incorrectly in some browsers/conditions and land on an
+   HTML page instead of the JSON response — that's the
+   "Unexpected token '<', <!DOCTYPE" error. XMLHttpRequest follows
+   that same redirect correctly and keeps the POST body intact, so
+   every call to the backend now goes through this helper instead.
+============================================================ */
+function postToGAS(bodyObj){
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', GAS_WEB_APP_URL, true);
+    xhr.setRequestHeader('Content-Type', 'text/plain;charset=utf-8');
+    xhr.onload = () => {
+      if(xhr.status >= 200 && xhr.status < 300){
+        try{ resolve(JSON.parse(xhr.responseText)); }
+        catch(e){ reject(new Error('Unexpected response from server')); }
+      }else{
+        reject(new Error('Request failed with status ' + xhr.status));
+      }
+    };
+    xhr.onerror = () => reject(new Error('Network error — check your connection'));
+    xhr.send(JSON.stringify(bodyObj));
+  });
+}
+
+/* ---- month-filter helpers ---- */
 function startOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
 function endOfMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0); }
-// Parses the "yyyy-MM-dd" strings the backend sends (formatDate_ in the .gs file).
 function parseYMD(str){
   if(!str) return null;
   const parts = String(str).split('-').map(Number);
   if(parts.length !== 3 || parts.some(isNaN)) return null;
   return new Date(parts[0], parts[1]-1, parts[2]);
 }
-// A task counts as "ongoing" in the viewed month if its start..end range
-// overlaps that month at all. No start date -> we can't place it in time,
-// so it's shown in every month rather than silently hidden. No end date ->
-// treated as still ongoing (open-ended work).
 function taskInMonth(task, monthDate){
   const mStart = startOfMonth(monthDate);
   const mEnd = endOfMonth(monthDate);
@@ -212,47 +231,22 @@ document.getElementById('todayMonthBtn').onclick = () => {
   applyMonthFilterAndRender();
 };
 
-/* ---- session persistence (this is a real hosted page, not a preview,
-   so localStorage is fine here — see note in project docs about moving
-   to a token-based session later) ---- */
 function saveSession(s){ localStorage.setItem('engagex_admin_session', JSON.stringify(s)); }
 function loadSession(){ try{ return JSON.parse(localStorage.getItem('engagex_admin_session')); }catch(e){ return null; } }
 function clearSession(){ localStorage.removeItem('engagex_admin_session'); }
 
+// CHANGED: all three now use postToGAS (XHR) instead of fetch().
 async function login(adminId, password){
-  const res = await fetch(GAS_WEB_APP_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ action: 'adminLogin', payload: { adminId, password } })
-  });
-  return res.json();
+  return postToGAS({ action: 'adminLogin', payload: { adminId, password } });
 }
-
-// Changed from GET with password in the query string to POST with the
-// password in the body — query params can end up in server logs and
-// Referer headers, request bodies don't.
 async function fetchAdminData(){
-  const res = await fetch(GAS_WEB_APP_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({
-      action: 'getAdminData',
-      payload: { adminId: session.adminId, password: session.password }
-    })
-  });
-  return res.json();
+  return postToGAS({ action: 'getAdminData', payload: { adminId: session.adminId, password: session.password } });
 }
-
 async function updateProgress(profileName, status, currentlyIncreased){
-  const res = await fetch(GAS_WEB_APP_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({
-      action: 'updateBookingProgress',
-      payload: { adminId: session.adminId, password: session.password, profileName, status, currentlyIncreased }
-    })
+  return postToGAS({
+    action: 'updateBookingProgress',
+    payload: { adminId: session.adminId, password: session.password, profileName, status, currentlyIncreased }
   });
-  return res.json();
 }
 
 function showLogin(){
@@ -293,7 +287,6 @@ async function doLogin(){
 }
 
 document.getElementById('loginBtn').onclick = doLogin;
-// Enter key now submits from either field, not just a click.
 ['f_adminId','f_password'].forEach(id => {
   document.getElementById(id).addEventListener('keydown', (e) => {
     if(e.key === 'Enter') doLogin();
@@ -364,7 +357,6 @@ function renderTasks(tasks){
         msgEl.style.display = 'block';
         return;
       }
-      // Guard against entering more than the order total by mistake.
       if(order > 0 && increased > order){
         msgEl.textContent = `Can't exceed the order total (${order}).`;
         msgEl.className = 'save-msg err';
@@ -377,8 +369,6 @@ function renderTasks(tasks){
       try{
         const result = await updateProgress(name, status, increased);
         if(!result.success) throw new Error(result.error || 'Could not save');
-        // keep in-memory copy in sync so re-filtering (month switch) doesn't
-        // revert to stale numbers before the next refresh
         const t = allTasks.find(x => x.profileName === name);
         if(t){ t.status = status; t.currentlyIncreased = increased; }
         msgEl.textContent = 'Saved.';
@@ -406,7 +396,6 @@ async function loadDashboard(){
   try{
     const data = await fetchAdminData();
     if(!data.success){
-      // credentials no longer valid — bounce back to login
       clearSession();
       session = null;
       showLogin();
@@ -419,8 +408,8 @@ async function loadDashboard(){
       `${Number(data.totalReviewsCompleted)||0} / ${Number(data.totalReviewsAssigned)||0}`;
     document.getElementById('earningsSummary').textContent =
       `${fmt(data.totalReceived)} / ${fmt(data.totalEarningPotential)}`;
-    allTasks = data.tasks || [];           // NEW: keep the full set
-    applyMonthFilterAndRender();           // NEW: render only the current month's tasks
+    allTasks = data.tasks || [];
+    applyMonthFilterAndRender();
   }catch(err){
     document.getElementById('taskList').innerHTML = '<div class="empty-note">Couldn\u2019t load your data. Check your connection and tap Refresh.</div>';
   }finally{

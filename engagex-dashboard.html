@@ -998,12 +998,12 @@ function bookingInMonth(b, monthDate){
 // Returns {profiles, bookings, admins} narrowed to the given month.
 function getMonthScopedData(data, monthDate){
   const bookings = data.bookings.filter(b => bookingInMonth(b, monthDate));
-  const bookedNames = new Set(bookings.map(b => b.profileName));
-  const namesWithAnyBooking = new Set(data.bookings.map(b => b.profileName));
+  const bookedNames = new Set(bookings.map(b => normalizeName(b.profileName)));
+  const namesWithAnyBooking = new Set(data.bookings.map(b => normalizeName(b.profileName)));
   // Keep a profile if it has no booking at all (can't be placed in time —
   // show always) or if its booking falls in this month.
-  const profiles = data.profiles.filter(p => !namesWithAnyBooking.has(p.name) || bookedNames.has(p.name));
-  const admins = data.admins.map(a => ({ ...a, profileNames: a.profileNames.filter(n => bookedNames.has(n)) }));
+  const profiles = data.profiles.filter(p => !namesWithAnyBooking.has(normalizeName(p.name)) || bookedNames.has(normalizeName(p.name)));
+  const admins = data.admins.map(a => ({ ...a, profileNames: a.profileNames.filter(n => bookedNames.has(normalizeName(n))) }));
   return { profiles, bookings, admins };
 }
 // Client Payments scoping. A client shows if their matching booking
@@ -1029,6 +1029,13 @@ function getMonthScopedClients(data, monthDate){
 function monthLabelText(d){
   return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
+// Client/Profile/Booking names come from different sheet tabs — a stray
+// trailing space or a casing difference between tabs (e.g. a client typed
+// as "Astro " on one tab and "Astro" on another) makes an exact === match
+// fail silently, which is why the month filter can appear to do nothing at
+// all (an unmatched client falls into the "always show" fallback). Every
+// name comparison across sheets below goes through this first.
+function normalizeName(n){ return String(n||'').trim().replace(/\s+/g,' ').toLowerCase(); }
 
 async function loadData(){
   try{
@@ -1064,11 +1071,11 @@ function toKey(d){ return d.toISOString().slice(0,10); }
 function buildDayMap(data){
   const map = {};
   const profileCap = {};
-  data.profiles.forEach(p => profileCap[p.name] = p.dailyQty || 5);
+  data.profiles.forEach(p => profileCap[normalizeName(p.name)] = p.dailyQty || 5);
   const today = new Date(); today.setHours(0,0,0,0);
   data.bookings.forEach(b => {
     if(!b.startDate) return;
-    const capacity = profileCap[b.profileName] || 5;
+    const capacity = profileCap[normalizeName(b.profileName)] || 5;
     const start = new Date(b.startDate + "T00:00:00");
     let end;
     if(b.endDate){ end = new Date(b.endDate + "T00:00:00"); }

@@ -322,8 +322,13 @@
     </div>
     <div class="card">
       <div class="pay-toolbar">
-        <h2>All Clients</h2>
-        <input class="search" id="searchBox" placeholder="Search client name…">
+        <h2>Clients <span class="month-tag" id="paymentsMonthTag"></span></h2>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-dim); cursor:pointer;">
+            <input type="checkbox" id="showAllMonthsToggle"> Show all months
+          </label>
+          <input class="search" id="searchBox" placeholder="Search client name…">
+        </div>
       </div>
       <table>
         <thead>
@@ -334,7 +339,7 @@
           <tr><td>Total</td><td id="footOrders"></td><td id="footPaid"></td><td id="footRemaining"></td><td id="footAdmin"></td><td id="footProfit"></td><td></td></tr>
         </tfoot>
       </table>
-      <div class="note"><b>Note:</b> "Settled" means Remaining is ₹0. Click "Settle" on a Due client to mark it paid and credit the assigned admin's payout. Profit is Remaining − Admin payout, per client.</div>
+      <div class="note"><b>Note:</b> Shows clients booked in the month the calendar is currently on, plus any still-pending balance carried forward from earlier months. Fully settled clients only show in their own month. Use "‹ ›" on the Task Calendar tab to change month, or check "Show all months" to see everyone. "Settled" means Remaining is ₹0. Click "Settle" on a Due client to mark it paid and credit the assigned admin's payout. Profit is Remaining − Admin payout, per client.</div>
     </div>
   </div>
 </div>
@@ -922,7 +927,7 @@ const DEMO_DATA = {
   settledProfiles: ["Car Land Rentals"]
 };
 
-let state = { data: null, current: new Date(2025, 4, 1), usingDemo: false };
+let state = { data: null, current: new Date(2025, 4, 1), usingDemo: false, showAllMonthsPayments: false };
 
 // Safari's fetch() silently downgrades POST to GET when following the
 // 302 redirect that every Apps Script Web App response goes through —
@@ -956,11 +961,11 @@ function escapeHtml(str){
 }
 
 /* ============================================================
-NEW: month-scoping helpers
+month-scoping helpers
 Used to filter the Profiles / Admin Assignments / Profiles By
-Admin panels (and the three stat boxes above the calendar) down
-to whatever month state.current is pointing at — the same month
-shown by the Today/‹/› calendar controls.
+Admin panels, the Client Payments table, and the three stat boxes
+above the calendar down to whatever month state.current is
+pointing at — the same month shown by the Today/‹/› calendar controls.
 ============================================================ */
 function startOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
 function endOfMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0); }
@@ -992,6 +997,26 @@ function getMonthScopedData(data, monthDate){
   const profiles = data.profiles.filter(p => !namesWithAnyBooking.has(p.name) || bookedNames.has(p.name));
   const admins = data.admins.map(a => ({ ...a, profileNames: a.profileNames.filter(n => bookedNames.has(n)) }));
   return { profiles, bookings, admins };
+}
+// NEW: Client Payments scoping. A client shows if their matching booking
+// falls in the viewed month, OR if they're still unsettled (Remaining > 0)
+// and their booking started on/before this month — so a pending balance
+// from an earlier month keeps showing up ("pending from last month")
+// instead of disappearing the moment the calendar moves forward. Once a
+// client is fully settled, they only show in their own original month.
+function getMonthScopedClients(data, monthDate){
+  const mEnd = endOfMonth(monthDate);
+  const bookingByName = {};
+  data.bookings.forEach(b => { bookingByName[b.profileName] = b; });
+  return data.clients.filter(c => {
+    const booking = bookingByName[c.name];
+    if(!booking) return true; // can't place in time — always show
+    if(bookingInMonth(booking, monthDate)) return true;
+    const unsettled = Number(c.remaining||0) > 0;
+    const bStart = parseYMD(booking.startDate);
+    if(unsettled && bStart && bStart <= mEnd) return true; // pending, carried forward
+    return false;
+  });
 }
 function monthLabelText(d){
   return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -1176,7 +1201,7 @@ ${rows}
 </div>`;
 }
 
-/* ---------- NEW: month-scoped render pass ----------
+/* ---------- month-scoped render pass ----------
    Recomputes Profiles / Admin Assignments / Profiles By Admin and the
    three stat boxes above the calendar for whatever month state.current
    points at. Call this any time state.current changes or fresh data loads. */
@@ -1235,8 +1260,6 @@ function renderPayments(clients){
     }else if(payoutLogged){
       statusCell = `<span class="pill settled">Settled</span>`;
     }else{
-      // Settled (remaining = 0) but no payout on record yet — offer a
-      // one-click fallback to log it, without re-touching the client row.
       statusCell = `<span class="pill settled">Settled</span><button type="button" class="settle-btn log-link" data-name="${safeName}" data-mode="log">Log payout</button>`;
     }
     return `<tr>
@@ -1252,6 +1275,25 @@ function renderPayments(clients){
 </tr>`;
   }).join('');
   attachSettleHandlers();
+}
+
+// NEW: recomputes the Client Payments table for the currently viewed month
+// (or all clients if "Show all months" is checked), respecting the search box.
+function renderPaymentsScoped(){
+  const data = state.data;
+  if(!data) return;
+  const tag = document.getElementById('paymentsMonthTag');
+  let scoped;
+  if(state.showAllMonthsPayments){
+    scoped = data.clients;
+    tag.textContent = '— all months';
+  }else{
+    scoped = getMonthScopedClients(data, state.current);
+    tag.textContent = `— ${monthLabelText(state.current)}`;
+  }
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  const filtered = q ? scoped.filter(c => c.name.toLowerCase().includes(q)) : scoped;
+  renderPayments(filtered);
 }
 
 /* ---------- Settle button ---------- */
@@ -1285,9 +1327,12 @@ function attachSettleHandlers(){
   });
 }
 
-document.getElementById('searchBox').addEventListener('input', (e) => {
-  const q = e.target.value.toLowerCase();
-  renderPayments(state.data.clients.filter(c => c.name.toLowerCase().includes(q)));
+document.getElementById('searchBox').addEventListener('input', () => {
+  renderPaymentsScoped();
+});
+document.getElementById('showAllMonthsToggle').addEventListener('change', (e) => {
+  state.showAllMonthsPayments = e.target.checked;
+  renderPaymentsScoped();
 });
 
 /* ---------- Render everything ---------- */
@@ -1295,24 +1340,27 @@ function renderAll(){
   const data = state.data;
   const dayMap = buildDayMap(data);
   renderCalendar(dayMap);
-  renderMonthScoped();          // CHANGED: profiles/admins/sections/stat boxes now month-scoped
-  renderPayments(data.clients);
+  renderMonthScoped();          // profiles/admins/sections/stat boxes, month-scoped
+  renderPaymentsScoped();       // CHANGED: client payments table, month-scoped too
   populateAdminSelect(data.admins);
 }
 document.getElementById('prevBtn').onclick = () => {
   state.current.setMonth(state.current.getMonth()-1);
   renderCalendar(buildDayMap(state.data));
-  renderMonthScoped();          // CHANGED: re-filter the panels for the new month
+  renderMonthScoped();
+  renderPaymentsScoped();       // CHANGED: keep payments in sync with the calendar month
 };
 document.getElementById('nextBtn').onclick = () => {
   state.current.setMonth(state.current.getMonth()+1);
   renderCalendar(buildDayMap(state.data));
-  renderMonthScoped();          // CHANGED: re-filter the panels for the new month
+  renderMonthScoped();
+  renderPaymentsScoped();       // CHANGED
 };
 document.getElementById('todayBtn').onclick = () => {
   state.current = new Date();
   renderCalendar(buildDayMap(state.data));
-  renderMonthScoped();          // CHANGED: re-filter the panels for the new month
+  renderMonthScoped();
+  renderPaymentsScoped();       // CHANGED
 };
 
 /* ---------- Add Profile modal ---------- */

@@ -346,7 +346,7 @@
           <tr><td>Total</td><td id="footOrders"></td><td id="footPaid"></td><td id="footRemaining"></td><td id="footAdmin"></td><td id="footProfit"></td><td></td></tr>
         </tfoot>
       </table>
-      <div class="note"><b>Note:</b> Shows clients booked in the month you've navigated to above, plus any still-pending balance carried forward from earlier months. Fully settled clients only show in their own month. The ‹ › here stays in sync with the Task Calendar tab — moving one moves the other. Check "Show all months" to see everyone (disables the ‹ › while it's on). "Settled" means Remaining is ₹0. Click "Settle" on a Due client to mark it paid and credit the assigned admin's payout. Profit is Remaining − Admin payout, per client.</div>
+      <div class="note"><b>Note:</b> Shows clients whose booking actually overlapped the month you've navigated to above, plus any still-pending balance carried forward from a month whose work already started. Fully settled clients only show in the month their work actually happened. The ‹ › here stays in sync with the Task Calendar tab — moving one moves the other. Check "Show all months" to see everyone (disables the ‹ › while it's on). "Settled" means Remaining is ₹0. Click "Settle" on a Due client to mark it paid and credit the assigned admin's payout. Profit is Remaining − Admin payout, per client.</div>
     </div>
   </div>
 </div>
@@ -987,12 +987,22 @@ function parseYMD(str){
 // A booking counts as "ongoing" in the viewed month if its start..end
 // range overlaps that month at all. No start date -> can't place it in
 // time, so it's shown in every month rather than silently hidden.
-// No end date -> treated as still ongoing (open-ended work).
+//
+// No end date is NOT automatically treated as "still ongoing forever."
+// A booking marked "Done" with a blank end date has definitely finished —
+// it just wasn't logged — so it's anchored to its own start date instead
+// of defaulting to the year 9999. Only a booking that's genuinely still
+// in progress (not Done) with no end date is treated as open-ended.
+// This is the fix for months endlessly re-showing completed work.
 function bookingInMonth(b, monthDate){
   const mStart = startOfMonth(monthDate), mEnd = endOfMonth(monthDate);
   const bStart = parseYMD(b.startDate);
   if(!bStart) return true;
-  const bEnd = parseYMD(b.endDate) || new Date(9999, 11, 31);
+  let bEnd = parseYMD(b.endDate);
+  if(!bEnd){
+    const isDone = b.status && b.status.toLowerCase() === 'done';
+    bEnd = isDone ? bStart : new Date(9999, 11, 31);
+  }
   return bStart <= mEnd && bEnd >= mStart;
 }
 // Returns {profiles, bookings, admins} narrowed to the given month.
@@ -1012,12 +1022,18 @@ function getMonthScopedData(data, monthDate){
 // from an earlier month keeps showing up ("pending from last month")
 // instead of disappearing the moment the calendar moves forward. Once a
 // client is fully settled, they only show in their own original month.
+//
+// Name lookup now goes through normalizeName() (matching the rest of the
+// file) instead of an exact === match — a stray trailing space or case
+// difference between the Clients tab and the Bookings tab used to miss
+// the lookup entirely and fall into the "always show" fallback, which
+// made that client bleed into every month no matter what.
 function getMonthScopedClients(data, monthDate){
   const mEnd = endOfMonth(monthDate);
   const bookingByName = {};
-  data.bookings.forEach(b => { bookingByName[b.profileName] = b; });
+  data.bookings.forEach(b => { bookingByName[normalizeName(b.profileName)] = b; });
   return data.clients.filter(c => {
-    const booking = bookingByName[c.name];
+    const booking = bookingByName[normalizeName(c.name)];
     if(!booking) return true; // can't place in time — always show
     if(bookingInMonth(booking, monthDate)) return true;
     const unsettled = Number(c.remaining||0) > 0;

@@ -82,6 +82,7 @@
 .nav{display:flex; align-items:center; gap:8px;}
 .nav button{background:var(--panel-2); border:1px solid var(--line); color:var(--text); padding:7px 12px; border-radius:8px; cursor:pointer; font-size:13px;}
 .nav button:hover{border-color:var(--purple);}
+.nav button:disabled{opacity:0.5; cursor:not-allowed;}
 .month-label{font-weight:600; font-size:15px; min-width:130px; text-align:center;}
 .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
 .day-name{text-align:center; font-size:11.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.5px; padding-bottom:6px;}
@@ -323,6 +324,12 @@
     <div class="card">
       <div class="pay-toolbar">
         <h2>Clients <span class="month-tag" id="paymentsMonthTag"></span></h2>
+        <div class="nav" id="payNav">
+          <button id="payTodayBtn">Today</button>
+          <button id="payPrevBtn">&lsaquo;</button>
+          <div class="month-label" id="payMonthLabel">May 2025</div>
+          <button id="payNextBtn">&rsaquo;</button>
+        </div>
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
           <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-dim); cursor:pointer;">
             <input type="checkbox" id="showAllMonthsToggle"> Show all months
@@ -339,7 +346,7 @@
           <tr><td>Total</td><td id="footOrders"></td><td id="footPaid"></td><td id="footRemaining"></td><td id="footAdmin"></td><td id="footProfit"></td><td></td></tr>
         </tfoot>
       </table>
-      <div class="note"><b>Note:</b> Shows clients booked in the month the calendar is currently on, plus any still-pending balance carried forward from earlier months. Fully settled clients only show in their own month. Use "‹ ›" on the Task Calendar tab to change month, or check "Show all months" to see everyone. "Settled" means Remaining is ₹0. Click "Settle" on a Due client to mark it paid and credit the assigned admin's payout. Profit is Remaining − Admin payout, per client.</div>
+      <div class="note"><b>Note:</b> Shows clients booked in the month you've navigated to above, plus any still-pending balance carried forward from earlier months. Fully settled clients only show in their own month. The ‹ › here stays in sync with the Task Calendar tab — moving one moves the other. Check "Show all months" to see everyone (disables the ‹ › while it's on). "Settled" means Remaining is ₹0. Click "Settle" on a Due client to mark it paid and credit the assigned admin's payout. Profit is Remaining − Admin payout, per client.</div>
     </div>
   </div>
 </div>
@@ -965,7 +972,8 @@ month-scoping helpers
 Used to filter the Profiles / Admin Assignments / Profiles By
 Admin panels, the Client Payments table, and the three stat boxes
 above the calendar down to whatever month state.current is
-pointing at — the same month shown by the Today/‹/› calendar controls.
+pointing at — the same month shown by the Today/‹/› calendar controls
+(and now also the Today/‹/› controls on the Client Payments tab).
 ============================================================ */
 function startOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
 function endOfMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0); }
@@ -998,7 +1006,7 @@ function getMonthScopedData(data, monthDate){
   const admins = data.admins.map(a => ({ ...a, profileNames: a.profileNames.filter(n => bookedNames.has(n)) }));
   return { profiles, bookings, admins };
 }
-// NEW: Client Payments scoping. A client shows if their matching booking
+// Client Payments scoping. A client shows if their matching booking
 // falls in the viewed month, OR if they're still unsettled (Remaining > 0)
 // and their booking started on/before this month — so a pending balance
 // from an earlier month keeps showing up ("pending from last month")
@@ -1277,14 +1285,24 @@ function renderPayments(clients){
   attachSettleHandlers();
 }
 
-// NEW: recomputes the Client Payments table for the currently viewed month
+// Recomputes the Client Payments table for the currently viewed month
 // (or all clients if "Show all months" is checked), respecting the search box.
+// Also keeps the payments-tab month label in sync with state.current, and
+// disables its nav buttons while "Show all months" is on (moving month
+// wouldn't change anything visible in that mode).
 function renderPaymentsScoped(){
   const data = state.data;
   if(!data) return;
   const tag = document.getElementById('paymentsMonthTag');
+  const payLabel = document.getElementById('payMonthLabel');
+  payLabel.textContent = monthLabelText(state.current);
+  const showingAll = state.showAllMonthsPayments;
+  document.getElementById('payPrevBtn').disabled = showingAll;
+  document.getElementById('payNextBtn').disabled = showingAll;
+  document.getElementById('payTodayBtn').disabled = showingAll;
+  document.getElementById('payNav').style.opacity = showingAll ? '0.5' : '1';
   let scoped;
-  if(state.showAllMonthsPayments){
+  if(showingAll){
     scoped = data.clients;
     tag.textContent = '— all months';
   }else{
@@ -1341,27 +1359,26 @@ function renderAll(){
   const dayMap = buildDayMap(data);
   renderCalendar(dayMap);
   renderMonthScoped();          // profiles/admins/sections/stat boxes, month-scoped
-  renderPaymentsScoped();       // CHANGED: client payments table, month-scoped too
+  renderPaymentsScoped();       // client payments table, month-scoped too
   populateAdminSelect(data.admins);
 }
-document.getElementById('prevBtn').onclick = () => {
-  state.current.setMonth(state.current.getMonth()-1);
+
+// Single source of truth for changing the viewed month — used by both the
+// calendar's Today/‹/› controls and the new ones on Client Payments, so
+// the two tabs always stay in lockstep no matter which one you click from.
+function changeMonth(delta){
+  if(delta === 0){ state.current = new Date(); }
+  else{ state.current.setMonth(state.current.getMonth()+delta); }
   renderCalendar(buildDayMap(state.data));
   renderMonthScoped();
-  renderPaymentsScoped();       // CHANGED: keep payments in sync with the calendar month
-};
-document.getElementById('nextBtn').onclick = () => {
-  state.current.setMonth(state.current.getMonth()+1);
-  renderCalendar(buildDayMap(state.data));
-  renderMonthScoped();
-  renderPaymentsScoped();       // CHANGED
-};
-document.getElementById('todayBtn').onclick = () => {
-  state.current = new Date();
-  renderCalendar(buildDayMap(state.data));
-  renderMonthScoped();
-  renderPaymentsScoped();       // CHANGED
-};
+  renderPaymentsScoped();
+}
+document.getElementById('todayBtn').onclick = () => changeMonth(0);
+document.getElementById('prevBtn').onclick = () => changeMonth(-1);
+document.getElementById('nextBtn').onclick = () => changeMonth(1);
+document.getElementById('payTodayBtn').onclick = () => changeMonth(0);
+document.getElementById('payPrevBtn').onclick = () => changeMonth(-1);
+document.getElementById('payNextBtn').onclick = () => changeMonth(1);
 
 /* ---------- Add Profile modal ---------- */
 const modalBackdrop = document.getElementById('modalBackdrop');

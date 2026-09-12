@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Track Your Order | EngageX</title>
+<style>
+  :root{
+    --bg:#F5F6FB; --panel:#FFFFFF; --panel-2:#FAFAFE; --line:#E8E9F3;
+    --purple:#6D5BD0; --purple-bg:#EFECFC; --purple-dark:#5443B8;
+    --orange:#F0A93E; --orange-bg:#FEF3DF;
+    --green:#33AE73; --green-bg:#E6F8EE;
+    --text:#22203A; --text-dim:#8D8AA3; --radius:14px;
+    --shadow:0 1px 2px rgba(30,27,60,0.04), 0 4px 14px rgba(30,27,60,0.05);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:'Segoe UI', system-ui, -apple-system, sans-serif; padding:24px; min-height:100vh; display:flex; align-items:center; justify-content:center;}
+  .wrap{max-width:440px; width:100%;}
+  .brand-row{display:flex; align-items:center; gap:8px; margin-bottom:18px; justify-content:center;}
+  .brand-row span{width:20px;height:20px;border-radius:6px;background:var(--purple);display:inline-block;}
+  .brand-row b{color:var(--purple-dark); font-size:15px;}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:26px; box-shadow:var(--shadow);}
+  h1{font-size:19px; font-weight:800; margin-bottom:4px;}
+  .sub{color:var(--text-dim); font-size:12.5px; margin-bottom:20px;}
+  .status-pill{font-size:11px; font-weight:700; padding:4px 11px; border-radius:20px; display:inline-block;}
+  .status-pill.done{background:var(--green-bg); color:#1F8C57;}
+  .status-pill.progress{background:var(--orange-bg); color:#B8790E;}
+  .status-pill.notstarted{background:#F0F0F6; color:var(--text-dim);}
+  .big-progress{margin:20px 0 6px;}
+  .progress-outer{height:14px; background:#EDEDF5; border-radius:8px; overflow:hidden;}
+  .progress-inner{height:100%; background:linear-gradient(90deg, var(--purple), var(--purple-dark)); border-radius:8px; transition:width .4s ease;}
+  .progress-caption{display:flex; justify-content:space-between; font-size:12.5px; color:var(--text-dim); margin-top:8px;}
+  .progress-caption b{color:var(--text); font-size:14px;}
+  .stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:20px;}
+  .stat-box{background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:14px;}
+  .stat-box .label{font-size:11px; color:var(--text-dim); font-weight:600; margin-bottom:4px;}
+  .stat-box .value{font-size:18px; font-weight:800;}
+  .footnote{font-size:11.5px; color:var(--text-dim); text-align:center; margin-top:20px; line-height:1.5;}
+  .loading, .error, .not-found{text-align:center; padding:30px 10px; color:var(--text-dim); font-size:13.5px;}
+  .error{color:#B23A31;}
+  .refresh-row{text-align:center; margin-top:16px;}
+  .refresh-btn{background:var(--panel-2); border:1px solid var(--line); color:var(--text); padding:8px 16px; border-radius:8px; font-size:12.5px; font-weight:600; cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand-row"><span></span><b>EngageX</b></div>
+  <div class="card" id="card">
+    <div class="loading" id="loadingMsg">Loading your progress…</div>
+  </div>
+  <div class="refresh-row"><button class="refresh-btn" id="refreshBtn" style="display:none;">Refresh</button></div>
+</div>
+
+<script>
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyuRJruC-6i9bkghf36iTfFdweva9Yr1_tdPwm5h00SIgdGr2X5DpikvDgoiyJtkrzZ/exec";
+
+function escapeHtml(str){
+  return String(str ?? '').replace(/[&<>"']/g, ch => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[ch]));
+}
+function statusClass(status){
+  const s = (status||"").toLowerCase();
+  if(s==="done") return "done";
+  if(s==="in progress") return "progress";
+  return "notstarted";
+}
+
+function getProfileParam(){
+  const params = new URLSearchParams(window.location.search);
+  return (params.get('profile') || params.get('name') || '').trim();
+}
+
+function renderNotFound(name){
+  document.getElementById('card').innerHTML = `
+    <div class="not-found">
+      We couldn't find an order under "<b>${escapeHtml(name)}</b>".<br><br>
+      Please double check the link, or message us on WhatsApp and we'll help you out.
+    </div>`;
+}
+function renderError(){
+  document.getElementById('card').innerHTML = `
+    <div class="error">Couldn't load your order right now. Please check your connection and try again.</div>`;
+  document.getElementById('refreshBtn').style.display = 'inline-block';
+}
+
+function render(profile, booking){
+  const order = Number(booking.order) || 0;
+  const done = Number(booking.currentlyIncreased) || 0;
+  const pct = order ? Math.min(100, Math.round((done/order)*100)) : 0;
+  const isDone = (booking.status||'').toLowerCase() === 'done';
+  const cap = profile.dailyQty || 5;
+
+  let daysRemainingHtml = '';
+  if(!isDone && booking.startDate){
+    const plannedDays = Math.max(1, Math.ceil(order / cap));
+    const start = new Date(booking.startDate + "T00:00:00");
+    const today = new Date(); today.setHours(0,0,0,0);
+    const elapsed = Math.max(0, Math.floor((today - start) / 86400000) + 1);
+    const daysWorking = Math.min(elapsed, plannedDays);
+    const daysRemaining = Math.max(0, plannedDays - daysWorking);
+    daysRemainingHtml = `
+      <div class="stat-box">
+        <div class="label">Est. Days Remaining</div>
+        <div class="value">${daysRemaining}</div>
+      </div>`;
+  }
+
+  document.getElementById('card').innerHTML = `
+    <h1>${escapeHtml(profile.name)}</h1>
+    <div class="sub">Here's how your order is coming along</div>
+    <span class="status-pill ${statusClass(booking.status)}">${escapeHtml(booking.status || 'Not started')}</span>
+    <div class="big-progress">
+      <div class="progress-outer"><div class="progress-inner" style="width:${pct}%;"></div></div>
+      <div class="progress-caption"><span><b>${done}</b> of ${order} done</span><span>${pct}%</span></div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="label">Daily Pace</div>
+        <div class="value">${cap}/day</div>
+      </div>
+      ${daysRemainingHtml || `<div class="stat-box"><div class="label">Status</div><div class="value" style="font-size:14px;">${isDone?'Completed 🎉':'—'}</div></div>`}
+    </div>
+    <div class="footnote">Updated live from EngageX. Have a question about your order? Message us on WhatsApp anytime.</div>
+  `;
+}
+
+async function load(){
+  const name = getProfileParam();
+  document.getElementById('refreshBtn').style.display = 'none';
+  if(!name){
+    document.getElementById('card').innerHTML = `<div class="error">No order specified in this link.</div>`;
+    return;
+  }
+  try{
+    const res = await fetch(`${GAS_WEB_APP_URL}?action=getDashboardData`);
+    if(!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    const lowerName = name.toLowerCase();
+    const profile = data.profiles.find(p => p.name.toLowerCase() === lowerName);
+    const booking = data.bookings.find(b => b.profileName.toLowerCase() === lowerName);
+    if(!profile || !booking){
+      renderNotFound(name);
+      return;
+    }
+    render(profile, booking);
+  }catch(err){
+    renderError();
+  }
+}
+document.getElementById('refreshBtn').onclick = load;
+load();
+</script>
+</body>
+</html>
